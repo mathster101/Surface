@@ -27,5 +27,5 @@ def dummy_proc():
 
 if __name__ == '__main__':
     mirrh = Magi.Magi()
-    #dummy_proc()
+    dummy_proc()
     pass

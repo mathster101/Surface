@@ -1,21 +1,22 @@
 import socket
 import pickle
+import time
 class Neo:
     def __init__(self):
         self.sock = socket.socket()
         self.conn = None
         self.addr = None
         self.i_am_a = None
+        self.remnant = b''
 
     def start_server(self, PORT=9999):
         self.i_am_a = "server"
         self.sock.bind(('', PORT))
         self.sock.listen(5)
-        #print(self.addr[0],"has connected")
     
     def get_new_conn(self):
         self.conn, self.addr = self.sock.accept()
-        return self.addr
+        return (self.conn, self.addr)
 
     def connect_client(self, PORT=9999, IP='127.0.0.1'):
         self.i_am_a = "client"
@@ -33,7 +34,7 @@ class Neo:
 
 
     def receive_data(self):
-        received = b''
+        received = self.remnant
         end_char = bytes("msg-end", encoding = 'utf-8')
         if self.i_am_a == "server":
             while 1:
@@ -48,6 +49,7 @@ class Neo:
         
         terminate_at = received.find(end_char)
         received = received[:terminate_at]
+        self.remnant = received[terminate_at+len("msg-end"):]
         received = pickle.loads(received)
         return received
 
@@ -58,3 +60,4 @@ class Neo:
             self.conn.sendall(data)
         else:
             self.sock.sendall(data)
+            time.sleep(0.001)#doesnt work without this :/
