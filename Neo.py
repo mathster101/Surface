@@ -45,13 +45,12 @@ class Neo:
             while 1:    
                 received += self.sock.recv(1024)
                 if end_char in received:
-                    break        
-        
+                    break
         terminate_at = received.find(end_char)
-        received = received[:terminate_at]
+        true_received = received[:terminate_at]
         self.remnant = received[terminate_at+len("msg-end"):]
-        received = pickle.loads(received)
-        return received
+        true_received = pickle.loads(true_received)
+        return true_received
 
     def send_data(self,object_to_send):
         data = pickle.dumps(object_to_send)
@@ -60,4 +59,4 @@ class Neo:
             self.conn.sendall(data)
         else:
             self.sock.sendall(data)
-            time.sleep(0.001)#doesnt work without this :/
+            #time.sleep(0.001)#doesnt work without this :/
