@@ -41,6 +41,10 @@ class Magi():
         self.free_port = 1234
         self.bookkeepers = []
     
+    def Process(self,target,args):
+        proc = mp.Process(target=target, args=args)
+        return proc
+
     def Queue(self):
         self.bookkeepers.append(new_bookkeeper(self.free_port))
         self.bookkeepers[-1].start()
