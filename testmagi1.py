@@ -1,4 +1,4 @@
-import Magi
+import Magiv1
 import multiprocessing as mp
 import Neo
 import time
@@ -26,6 +26,6 @@ def dummy_proc():
 
 
 if __name__ == '__main__':
-    mirrh = Magi.Magi()
+    mirrh = Magiv1.Magi()
     dummy_proc()
     pass

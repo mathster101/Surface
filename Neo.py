@@ -1,6 +1,6 @@
 import socket
 import pickle
-import time
+ 
 class Neo:
     def __init__(self):
         self.sock = socket.socket()
@@ -60,3 +60,6 @@ class Neo:
         else:
             self.sock.sendall(data)
             #time.sleep(0.001)#doesnt work without this :/
+
+    def get_my_ip(self):
+        return socket.gethostbyname(socket.gethostname())
