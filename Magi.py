@@ -51,11 +51,12 @@ class Magi():
         self.neo.connect_client(PORT=6969,IP = IP_ADDR)
         self.neo.send_data('initial_heartbeat_check')
         num_cores = self.neo.receive_data()
-        pass
+        self.network_threads[IP_ADDR] = num_cores
     
     def listen_for_orders(self):
         #run on network systems
         self.neo.start_server(PORT=6969)
+        print("Magi slave online")
         while 1:
             self.neo.get_new_conn()
             data = self.neo.receive_data()
