@@ -1,8 +1,6 @@
 import Neo
 import multiprocessing as mp
 
-
-
 def new_bookkeeper(free_port):
     new_bookkeeper = mp.Process(target=bookkeeper,args = (free_port,))
     return new_bookkeeper
@@ -40,6 +38,7 @@ class Magi():
         self.bookkeepers = []
         self.connected_to_queue = False
         self.neo = Neo.Neo()
+        self.network_threads = []
 
     def __del__(self):
         try:
@@ -47,17 +46,39 @@ class Magi():
         except:
             pass
 
+    def register_network_thread(self,IP_ADDR):
+        #tell magi about a network system
+        self.neo.connect_client(PORT=6969,IP = IP_ADDR)
+        self.neo.send_data('initial_heartbeat_check')
+        num_cores = self.neo.receive_data()
+        pass
+    
+    def listen_for_orders(self):
+        #run on network systems
+        self.neo.start_server(PORT=6969)
+        while 1:
+            self.neo.get_new_conn()
+            data = self.neo.receive_data()
+            if data == 'initial_heartbeat_check':
+                import os
+                cores = os.cpu_count()
+                self.neo.send_data(cores)
+                print("heartbeat sent")
+                self.neo.close_conn()
+
     def process(self,target,args):
         proc = mp.Process(target=target, args=args)
         return proc
 
     def queue(self):
+        #generate new queue object, return details(port num, ip addr)
         self.bookkeepers.append(new_bookkeeper(self.free_port))
         self.bookkeepers[-1].start()
         self.free_port += 1
         return [self.free_port - 1, self.neo.get_my_ip()] 
 
     def queue_put(self,q_details, data):
+        #add item to queue
         if not self.connected_to_queue:
             self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
             self.connected_to_queue = True
@@ -65,6 +86,7 @@ class Magi():
         return self.neo.receive_data()
 
     def queue_get(self,q_details):
+        #get and pop item from queue
         if not self.connected_to_queue:
             self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
             self.connected_to_queue = True
