@@ -25,6 +25,7 @@ class Neo:
 
     def close_conn(self):
         if self.i_am_a=="server":
+            #kind of buggy
             self.conn.close()
         else:
             self.sock.close()

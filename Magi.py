@@ -1,5 +1,6 @@
 import Neo
 import multiprocessing as mp
+import os
 
 def new_bookkeeper(free_port):
     new_bookkeeper = mp.Process(target=bookkeeper,args = (free_port,))
@@ -38,7 +39,7 @@ class Magi():
         self.bookkeepers = []
         self.connected_to_queue = False
         self.neo = Neo.Neo()
-        self.network_threads = {}
+        self.network_threads = {'127.0.0.1': os.cpu_count()}
 
     def __del__(self):
         try:
@@ -48,10 +49,13 @@ class Magi():
 
     def register_network_thread(self,IP_ADDR):
         #tell magi about a network system
-        self.neo.connect_client(PORT=6969,IP = IP_ADDR)
-        self.neo.send_data('initial_heartbeat_check')
-        num_cores = self.neo.receive_data()
-        self.network_threads[IP_ADDR] = num_cores
+        try:
+            self.neo.connect_client(PORT=6969,IP = IP_ADDR)
+            self.neo.send_data('initial_heartbeat_check')
+            num_cores = self.neo.receive_data()
+            self.network_threads[IP_ADDR] = num_cores
+        except:
+            print(f"error connecting to {IP_ADDR}")
     
     def listen_for_orders(self):
         #run on network systems
@@ -59,13 +63,16 @@ class Magi():
         print("Magi slave online")
         while 1:
             self.neo.get_new_conn()
-            data = self.neo.receive_data()
-            if data == 'initial_heartbeat_check':
-                import os
+            order = self.neo.receive_data()
+            if order == 'initial_heartbeat_check':
                 cores = os.cpu_count()
                 self.neo.send_data(cores)
                 print("heartbeat sent")
             
+            elif order == 'spawn_process':
+                function_text = self.neo.receive_data()
+                
+
             #self.neo.close_conn()
 
     def process(self,target,args):
