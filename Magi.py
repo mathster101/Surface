@@ -33,15 +33,6 @@ def bookkeeper(port):
             #print("terminate")
             break
 
-class TCP_queue():
-    def __init__(self, PORT):
-        self.port = PORT
-        self.bookkeeper = new_bookkeeper(self.port)
-        self.bookkeeper.start()
-    
-    def get_bookkeeper(self):
-        return self.bookkeeper
-
 
 class Magi():
     def __init__(self):
@@ -51,32 +42,39 @@ class Magi():
         self.neo = Neo.Neo()
 
     def __del__(self):
-        self.neo.close_conn()
-        print("death")
+        try:
+            self.neo.close_conn()
+        except:
+            pass
 
-    def Process(self,target,args):
+    def process(self,target,args):
         proc = mp.Process(target=target, args=args)
         return proc
 
-    def Queue(self):
-        q = TCP_queue(self.free_port)
-        self.bookkeepers.append(q.get_bookkeeper())
+    def queue(self):
+        self.bookkeepers.append(new_bookkeeper(self.free_port))
+        self.bookkeepers[-1].start()
         self.free_port += 1
         return [self.free_port - 1, self.neo.get_my_ip()] 
 
-    def Queue_put(self,q_details, data):
+    def queue_put(self,q_details, data):
         if not self.connected_to_queue:
             self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
             self.connected_to_queue = True
         self.neo.send_data(["put",data])
         return self.neo.receive_data()
 
-    def Queue_get(self,q_details):
+    def queue_get(self,q_details):
         if not self.connected_to_queue:
             self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
             self.connected_to_queue = True
         self.neo.send_data("get")
         return self.neo.receive_data()
+    
+    def kill_queues(self):
+        while len(self.bookkeepers) > 0:
+            p = self.bookkeepers.pop()
+            p.kill()
 
 
 

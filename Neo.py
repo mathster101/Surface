@@ -1,6 +1,7 @@
 import socket
 import pickle
- 
+import base64
+
 class Neo:
     def __init__(self):
         self.sock = socket.socket()
@@ -48,12 +49,14 @@ class Neo:
                     break
         terminate_at = received.find(end_char)
         true_received = received[:terminate_at]
+        true_received = base64.b64decode(true_received)
         self.remnant = received[terminate_at+len("msg-end"):]
         true_received = pickle.loads(true_received)
         return true_received
 
     def send_data(self,object_to_send):
         data = pickle.dumps(object_to_send)
+        data = base64.b64encode(data)
         data += bytes("msg-end",encoding = 'utf-8')
         if self.i_am_a == "server":
             self.conn.sendall(data)
