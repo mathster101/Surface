@@ -66,7 +66,7 @@ class Magi():
                 self.neo.send_data(cores)
                 print("heartbeat sent")
             
-            self.neo.close_conn()
+            #self.neo.close_conn()
 
     def process(self,target,args):
         proc = mp.Process(target=target, args=args)
