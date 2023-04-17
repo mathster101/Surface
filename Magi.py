@@ -38,7 +38,7 @@ class Magi():
         self.bookkeepers = []
         self.connected_to_queue = False
         self.neo = Neo.Neo()
-        self.network_threads = []
+        self.network_threads = {}
 
     def __del__(self):
         try:
@@ -65,7 +65,8 @@ class Magi():
                 cores = os.cpu_count()
                 self.neo.send_data(cores)
                 print("heartbeat sent")
-                self.neo.close_conn()
+            
+            self.neo.close_conn()
 
     def process(self,target,args):
         proc = mp.Process(target=target, args=args)
