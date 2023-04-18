@@ -79,6 +79,7 @@ class Magi():
 
     def process(self,target,args = None):
         import inspect
+        self.neo.connect_client(PORT=6969,IP = '192.168.0.6')
         self.neo.send_data("spawn_process")
         src = inspect.getsource(target)
         self.neo.send_data(src)
