@@ -54,6 +54,7 @@ class Magi():
             self.neo.send_data('initial_heartbeat_check')
             num_cores = self.neo.receive_data()
             self.network_threads[IP_ADDR] = num_cores
+            self.neo.close_conn()
         except:
             print(f"error connecting to {IP_ADDR}")
     
@@ -64,6 +65,7 @@ class Magi():
         while 1:
             self.neo.get_new_conn()
             order = self.neo.receive_data()
+            print(order)
             if order == 'initial_heartbeat_check':
                 cores = os.cpu_count()
                 self.neo.send_data(cores)
@@ -84,6 +86,7 @@ class Magi():
         src = inspect.getsource(target)
         self.neo.send_data(src)
         print(src)
+        self.neo.close_conn()
         #proc = mp.Process(target=target, args=args)
         #return proc
 
