@@ -40,7 +40,7 @@ class Magi():
         self.connected_to_queue = False
         self.neo = Neo.Neo()
         self.network_threads = {'127.0.0.1': os.cpu_count()}
-
+        self.new_proc_num = 0
     def __del__(self):
         try:
             self.neo.close_conn()
@@ -71,13 +71,20 @@ class Magi():
             
             elif order == 'spawn_process':
                 function_text = self.neo.receive_data()
-                
+                with open(f"{self.new_proc_num}_tmp.py","w") as f:
+                    f.write(function_text)
+                print("function written")
 
             #self.neo.close_conn()
 
-    def process(self,target,args):
-        proc = mp.Process(target=target, args=args)
-        return proc
+    def process(self,target,args = None):
+        import inspect
+        self.neo.send_data("spawn_process")
+        src = inspect.getsource(target)
+        self.neo.send_data(src)
+        print(src)
+        #proc = mp.Process(target=target, args=args)
+        #return proc
 
     def queue(self):
         #generate new queue object, return details(port num, ip addr)
