@@ -6,11 +6,12 @@ import numpy as np
 def dummy(text = "None"):
     import time
     index = 0
+    print("hello")
     with open("dummy.txt","w") as f:
         for i in range(10):
             f.write(f"{text} {index}\n")
             index += 1
-            time.sleep(1)
+            #time.sleep(1)
 
 
 def test1(queue_deets):
