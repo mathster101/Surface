@@ -83,12 +83,12 @@ class Magi():
             
             elif order == 'spawn_process':
                 fname = self.neo.receive_data().split(' ')[1]
-                print("received fname = ",fname)
+                print("received fname=",fname)
                 function_text = self.neo.receive_data()
-                with open(f"{self.new_proc_num}_tmp.py","w") as f:
+                with open(f"tmp_{self.new_proc_num}.py","w") as f:
                     f.write(function_text)
                     f.write(f"\n\n{fname}()")
-                proc = self.spawn_local_process(f"{self.new_proc_num}_tmp.py",fname)
+                proc = self.spawn_local_process(f"tmp_{self.new_proc_num}",fname)
                 self.local_procs.append(proc)
 
             #self.neo.close_conn()

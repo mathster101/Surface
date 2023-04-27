@@ -10,7 +10,7 @@ def dummy():
         for i in range(10):
             f.write(f"index \n")
             index += 0
-            time.sleep(secs=1)
+            time.sleep(1)
 
 def test1(queue_deets):
     iters = 1000
