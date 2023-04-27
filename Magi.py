@@ -2,6 +2,7 @@ import Neo
 import multiprocessing as mp
 import os
 import importlib as il
+import inspect
 
 def new_bookkeeper(free_port):
     new_bookkeeper = mp.Process(target=bookkeeper,args = (free_port,))
@@ -83,25 +84,29 @@ class Magi():
             
             elif order == 'spawn_process':
                 fname = self.neo.receive_data()
-                print("received fname=",fname)
+                print("recvdfname=",fname)
                 function_text = self.neo.receive_data()
                 with open(f"tmp_{self.new_proc_num}.py","w") as f:
                     f.write(function_text)
                     f.write(f"\n\n{fname}()")
                 args = self.neo.receive_data()
+                print("args=", args)
                 proc = self.spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
                 self.local_procs.append(proc)
 
             #self.neo.close_conn()
 
     def process(self,target,args = None):
-        import inspect
         self.neo.connect_client(PORT=6969,IP = '192.168.0.6')
         self.neo.send_data("spawn_process")
         src = inspect.getsource(target)
         self.neo.send_data(str(target.__name__))
         self.neo.send_data(src)
-        self.neo.send_date(args)
+        if args is tuple:
+            pass
+        else:
+            args = tuple(args)
+        self.neo.send_data(args)
         print(src)
         self.neo.close_conn()
         #proc = mp.Process(target=target, args=args)
