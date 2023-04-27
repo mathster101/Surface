@@ -100,12 +100,12 @@ class Magi():
         src = inspect.getsource(target)
         self.neo.send_data(str(target.__name__))
         self.neo.send_data(src)
-        if args is tuple:
+        if type(args) == type((1,)):
             pass
         else:
             args = (args,)
         self.neo.send_data(args)
-        print(src)
+        print("args",args)
         self.neo.close_conn()
         #proc = mp.Process(target=target, args=args)
         #return proc

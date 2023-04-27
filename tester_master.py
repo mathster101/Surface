@@ -18,6 +18,7 @@ def dummy2(magi_queue):
     import Magi
     magi = Magi.Magi()
     for i in range(10):
+        print("hello")
         magi.queue_put(magi_queue, f"message from remote system {i}")
         time.sleep(1)
 
