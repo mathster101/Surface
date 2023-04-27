@@ -121,9 +121,7 @@ class Magi():
 
     def queue_put(self,q_details, data):
         #add item to queue
-        if not self.connected_to_queue:
-            self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
-            self.connected_to_queue = True
+        self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
         self.neo.send_data(["put",data])
         data =  self.neo.receive_data()
         self.neo.close_conn()
@@ -131,9 +129,7 @@ class Magi():
 
     def queue_get(self,q_details):
         #get and pop item from queue
-        if not self.connected_to_queue:
-            self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
-            self.connected_to_queue = True
+        self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
         self.neo.send_data("get")
         data =  self.neo.receive_data()
         self.neo.close_conn()
