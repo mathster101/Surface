@@ -15,6 +15,7 @@ def dummy(text = "None"):
 
 def dummy2(magi_queue):
     import time
+    import Magi
     magi = Magi.Magi()
     for i in range(10):
         magi.queue_put(f"message from remote system {i}")
@@ -52,7 +53,9 @@ def master_test3():
     magi.register_network_thread('192.168.0.6')   
     magi.process(target = dummy2, args=(magi_queue,))
     while 1:
-        print(magi.queue_get())
+        data = magi.queue_get(magi_queue)
+        if data != None:
+            print(data)
 
 if __name__ == '__main__':
     # magi = Magi.Magi()
