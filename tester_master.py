@@ -6,15 +6,22 @@ import numpy as np
 def dummy(text = "None"):
     import time
     index = 0
-    print("hello")
+    print("this is the dummy function")
     with open("dummy.txt","w") as f:
         for i in range(10):
             f.write(f"{text} {index}\n")
             index += 1
-            #time.sleep(1)
+            time.sleep(1)
+
+def dummy2(magi_queue):
+    import time
+    magi = Magi.Magi()
+    for i in range(10):
+        magi.queue_put(f"message from remote system {i}")
+        time.sleep(1)
 
 
-def test1(queue_deets):
+def local_test1(queue_deets):
     iters = 1000
     magi = Magi.Magi()
     start = time.time()
@@ -37,7 +44,15 @@ def master_test1():
 def master_test2():
     magi = Magi.Magi()
     magi.register_network_thread('192.168.0.6')    
-    magi.process(target = dummy, args = ("hello"))
+    magi.process(target = dummy, args = ("hey there!"))
+
+def master_test3():
+    magi = Magi.Magi()
+    magi_queue = magi.queue()
+    magi.register_network_thread('192.168.0.6')   
+    magi.process(target = dummy2, args=(magi_queue,))
+    while 1:
+        print(magi.queue_get())
 
 if __name__ == '__main__':
     # magi = Magi.Magi()
@@ -48,4 +63,4 @@ if __name__ == '__main__':
     # for i in range(8):
     #     ports.append(magi.Queue())
     
-    master_test2()
+    master_test3()

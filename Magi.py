@@ -66,7 +66,7 @@ class Magi():
         func_lib = importlib.import_module(path_to_file)
         func = getattr(func_lib, fname)
         print(args)
-        proc = mp.Process(target=func,args=("masala",))
+        proc = mp.Process(target=func,args=args)
         proc.start()
         return proc
 
@@ -88,12 +88,11 @@ class Magi():
                 function_text = self.neo.receive_data()
                 with open(f"tmp_{self.new_proc_num}.py","w") as f:
                     f.write(function_text)
-                    #f.write(f"\n\n{fname}()")
                 args = self.neo.receive_data()
                 proc = self.spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
                 self.local_procs.append(proc)
 
-            #self.neo.close_conn()
+
 
     def process(self,target,args = None):
         self.neo.connect_client(PORT=6969,IP = '192.168.0.6')
