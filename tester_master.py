@@ -7,7 +7,7 @@ def dummy():
     import time
     index = 0
     with open("dummy.txt","w") as f:
-        while 1:
+        for i in range(10):
             f.write(f"index \n")
             index += 0
             time.sleep(secs=1)

@@ -1,6 +1,7 @@
 import Neo
 import multiprocessing as mp
 import os
+import importlib as il
 
 def new_bookkeeper(free_port):
     new_bookkeeper = mp.Process(target=bookkeeper,args = (free_port,))
@@ -41,6 +42,8 @@ class Magi():
         self.neo = Neo.Neo()
         self.network_threads = {'127.0.0.1': os.cpu_count()}
         self.new_proc_num = 0
+        self.local_procs = []
+   
     def __del__(self):
         try:
             self.neo.close_conn()
@@ -58,6 +61,13 @@ class Magi():
         except:
             print(f"error connecting to {IP_ADDR}")
     
+    def spawn_local_process(path_to_file,fname):
+        func_lib = il.import_module(path_to_file)
+        func = getattr(func_lib,fname)
+        proc = mp.Process(target = func)
+        return proc
+
+
     def listen_for_orders(self):
         #run on network systems
         self.neo.start_server(PORT=6969)
@@ -72,10 +82,13 @@ class Magi():
                 print("heartbeat sent")
             
             elif order == 'spawn_process':
+                fname = self.neo.receive_data()
                 function_text = self.neo.receive_data()
                 with open(f"{self.new_proc_num}_tmp.py","w") as f:
                     f.write(function_text)
-                print("function written")
+                    f.write(f"\n\n{fname}()")
+                proc = self.spawn_local_process(f"{self.new_proc_num}_tmp.py")
+                self.local_procs.append(proc)
 
             #self.neo.close_conn()
 
@@ -84,6 +97,7 @@ class Magi():
         self.neo.connect_client(PORT=6969,IP = '192.168.0.6')
         self.neo.send_data("spawn_process")
         src = inspect.getsource(target)
+        self.neo.send_data(str(target))
         self.neo.send_data(src)
         print(src)
         self.neo.close_conn()
