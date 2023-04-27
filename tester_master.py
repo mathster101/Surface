@@ -9,7 +9,7 @@ def dummy(text = "None"):
     with open("dummy.txt","w") as f:
         for i in range(10):
             f.write(f"{text} {index}\n")
-            index += 0
+            index += 1
             time.sleep(1)
 
 
