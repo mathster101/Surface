@@ -65,6 +65,7 @@ class Magi():
     def spawn_local_process(self, path_to_file, args, fname):
         func_lib = importlib.import_module(path_to_file)
         func = getattr(func_lib, fname)
+        print(args)
         proc = mp.Process(target = func,args = args)
         return proc
 
@@ -80,17 +81,14 @@ class Magi():
             if order == 'initial_heartbeat_check':
                 cores = os.cpu_count()
                 self.neo.send_data(cores)
-                print("heartbeat sent")
             
             elif order == 'spawn_process':
                 fname = self.neo.receive_data()
-                print("recvdfname=",fname)
                 function_text = self.neo.receive_data()
                 with open(f"tmp_{self.new_proc_num}.py","w") as f:
                     f.write(function_text)
                     f.write(f"\n\n{fname}()")
                 args = self.neo.receive_data()
-                print("args=", args)
                 proc = self.spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
                 self.local_procs.append(proc)
 
