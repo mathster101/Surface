@@ -105,7 +105,7 @@ class Magi():
         if args is tuple:
             pass
         else:
-            args = tuple(args)
+            args = (args,)
         self.neo.send_data(args)
         print(src)
         self.neo.close_conn()
