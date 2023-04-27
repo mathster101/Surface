@@ -66,8 +66,9 @@ class Magi():
         func_lib = importlib.import_module(path_to_file)
         func = getattr(func_lib, fname)
         print(args)
-        proc = mp.Process(target = func,args = args)
-        return proc
+        func("sex")
+        #proc = mp.Process(target = func,args = args)
+        #return proc
 
 
     def listen_for_orders(self):
