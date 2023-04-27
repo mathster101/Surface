@@ -18,16 +18,17 @@ def dummy2(magi_queue):
     import Magi
     magi = Magi.Magi()
     for i in range(10):
-        print("hello")
+        print(i)
         magi.queue_put(magi_queue, f"message from remote system {i}")
         time.sleep(1)
 
 
-def local_test1(queue_deets):
+def local_test1():
     iters = 1000
     magi = Magi.Magi()
+    queue_deets = magi.queue()
     start = time.time()
-    data = np.random.random((10,10))
+    data = np.random.random((3,10))
     for i in range(iters):
         magi.queue_put(queue_deets, data)
     mid = time.time()
@@ -57,6 +58,7 @@ def master_test3():
         data = magi.queue_get(magi_queue)
         if data != None:
             print(data)
+        time.sleep(1)
 
 if __name__ == '__main__':
     # magi = Magi.Magi()
@@ -66,5 +68,5 @@ if __name__ == '__main__':
     # ports = []
     # for i in range(8):
     #     ports.append(magi.Queue())
-    
+    # local_test1()
     master_test3()

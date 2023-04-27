@@ -12,10 +12,11 @@ def bookkeeper(port):
     queue = []
     neo_inst = Neo.Neo()
     neo_inst.start_server(PORT=port)
-    neo_inst.get_new_conn()
+    #neo_inst.get_new_conn()
     while True:
-        #neo_inst.get_new_conn()
+        neo_inst.get_new_conn()
         rcvd = neo_inst.receive_data()
+        print(rcvd)
         if rcvd == "get":
             if len(queue) == 0:
                 data = None
@@ -26,7 +27,8 @@ def bookkeeper(port):
         elif rcvd[0] == "put":
             queue.append(rcvd[1])
             neo_inst.send_data("done")
-        
+            print("in bookkeeper",rcvd[1])
+
         elif rcvd == "debug":
             print(queue)
         
@@ -123,7 +125,9 @@ class Magi():
             self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
             self.connected_to_queue = True
         self.neo.send_data(["put",data])
-        return self.neo.receive_data()
+        data =  self.neo.receive_data()
+        self.neo.close_conn()
+        return data
 
     def queue_get(self,q_details):
         #get and pop item from queue
@@ -131,7 +135,9 @@ class Magi():
             self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
             self.connected_to_queue = True
         self.neo.send_data("get")
-        return self.neo.receive_data()
+        data =  self.neo.receive_data()
+        self.neo.close_conn()
+        return data
     
     def kill_queues(self):
         while len(self.bookkeepers) > 0:
