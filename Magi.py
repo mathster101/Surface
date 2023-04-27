@@ -1,7 +1,7 @@
 import Neo
 import multiprocessing as mp
 import os
-import importlib as il
+import importlib
 import inspect
 
 def new_bookkeeper(free_port):
@@ -63,7 +63,7 @@ class Magi():
             print(f"error connecting to {IP_ADDR}")
     
     def spawn_local_process(self, path_to_file, args, fname):
-        func_lib = il.import_module(path_to_file)
+        func_lib = importlib.import_module(path_to_file)
         func = getattr(func_lib, fname)
         proc = mp.Process(target = func,args = args)
         return proc
