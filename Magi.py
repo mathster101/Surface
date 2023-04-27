@@ -61,10 +61,10 @@ class Magi():
         except:
             print(f"error connecting to {IP_ADDR}")
     
-    def spawn_local_process(self, path_to_file,fname):
+    def spawn_local_process(self, path_to_file, args, fname):
         func_lib = il.import_module(path_to_file)
         func = getattr(func_lib, fname)
-        proc = mp.Process(target = func)
+        proc = mp.Process(target = func,args = args)
         return proc
 
 
@@ -82,13 +82,14 @@ class Magi():
                 print("heartbeat sent")
             
             elif order == 'spawn_process':
-                fname = self.neo.receive_data().split(' ')[1]
+                fname = self.neo.receive_data()
                 print("received fname=",fname)
                 function_text = self.neo.receive_data()
                 with open(f"tmp_{self.new_proc_num}.py","w") as f:
                     f.write(function_text)
                     f.write(f"\n\n{fname}()")
-                proc = self.spawn_local_process(f"tmp_{self.new_proc_num}",fname)
+                args = self.neo.receive_data()
+                proc = self.spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
                 self.local_procs.append(proc)
 
             #self.neo.close_conn()
@@ -98,8 +99,9 @@ class Magi():
         self.neo.connect_client(PORT=6969,IP = '192.168.0.6')
         self.neo.send_data("spawn_process")
         src = inspect.getsource(target)
-        self.neo.send_data(str(target))
+        self.neo.send_data(str(target.__name__))
         self.neo.send_data(src)
+        self.neo.send_date(args)
         print(src)
         self.neo.close_conn()
         #proc = mp.Process(target=target, args=args)

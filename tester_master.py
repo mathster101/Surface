@@ -3,14 +3,15 @@ import multiprocessing as mp
 import time
 import numpy as np
 
-def dummy():
+def dummy(text = "None"):
     import time
     index = 0
     with open("dummy.txt","w") as f:
         for i in range(10):
-            f.write(f"index \n")
+            f.write(f"{text} {index}\n")
             index += 0
             time.sleep(1)
+
 
 def test1(queue_deets):
     iters = 1000
@@ -35,7 +36,7 @@ def master_test1():
 def master_test2():
     magi = Magi.Magi()
     magi.register_network_thread('192.168.0.6')    
-    magi.process(target = dummy)
+    magi.process(target = dummy, args = ("hello"))
 
 if __name__ == '__main__':
     # magi = Magi.Magi()
