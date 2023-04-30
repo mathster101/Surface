@@ -20,9 +20,7 @@ def dummy2(magi_queue):
     magi = Magi.Magi()
     for i in range(100):
         print(i)
-        magi.queue_put(magi_queue, f"message from remote system {i}")
-        arr =  np.random.random((10,10))
-        magi.queue_put(magi_queue, arr)
+        magi.queue_put(magi_queue, [f"message from remote system {i}",np.random.random((10,10))])
         time.sleep(0.1)
 
 def local_test1():
@@ -58,8 +56,8 @@ def master_test3():
     magi.process(target = dummy2, args=(magi_queue,))
     while 1:
         data = magi.queue_get(magi_queue)
-        if data != None and type(data) == type("string"):
-            print(data)
+        if data != None:
+            print(data[0])
         time.sleep(0.1)
 
 if __name__ == '__main__':
