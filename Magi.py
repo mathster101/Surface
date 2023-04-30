@@ -16,7 +16,6 @@ def bookkeeper(port):
     while True:
         neo_inst.get_new_conn()
         rcvd = neo_inst.receive_data()
-        print(rcvd)
         if rcvd == "get":
             if len(queue) == 0:
                 data = None
@@ -27,7 +26,6 @@ def bookkeeper(port):
         elif rcvd[0] == "put":
             queue.append(rcvd[1])
             neo_inst.send_data("done")
-            print("in bookkeeper",rcvd[1])
 
         elif rcvd == "debug":
             print(queue)
