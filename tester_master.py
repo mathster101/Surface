@@ -58,8 +58,19 @@ def master_test3():
         data = magi.queue_get(magi_queue)
         if data != None:
             print(data[0])
-        #time.sleep(0.1)
+        time.sleep(0.001)
 
+def master_test4():
+    magi = Magi.Magi()
+    magi_queue = magi.queue()
+    magi.register_network_thread('192.168.0.6')
+    for i in range(6):
+        magi.process(target = dummy2, args=(magi_queue,))
+    while 1:
+        data = magi.queue_get(magi_queue)
+        if data != None:
+            print(data[0])
+        time.sleep(0.001)
 if __name__ == '__main__':
     # magi = Magi.Magi()
     # queue_deets = magi.queue()
@@ -69,4 +80,4 @@ if __name__ == '__main__':
     # for i in range(8):
     #     ports.append(magi.Queue())
     # local_test1()
-    master_test3()
+    master_test4()
