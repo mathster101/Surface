@@ -16,6 +16,7 @@ def dummy(text = "None"):
 def dummy2(magi_queue):
     import time
     import Magi
+    import numpy as np
     magi = Magi.Magi()
     for i in range(100):
         print(i)
