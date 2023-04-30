@@ -58,7 +58,7 @@ def master_test3():
     magi.process(target = dummy2, args=(magi_queue,))
     while 1:
         data = magi.queue_get(magi_queue)
-        if data != None and isinstance(data, str):
+        if data != None and type(data) == type("string"):
             print(data)
         time.sleep(0.1)
 
