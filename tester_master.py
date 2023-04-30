@@ -18,9 +18,9 @@ def dummy2(magi_queue):
     import Magi
     import numpy as np
     magi = Magi.Magi()
-    for i in range(100):
+    for i in range(1000000):
         print(i)
-        magi.queue_put(magi_queue, [f"message from remote system {i}",np.random.random((10,10))])
+        magi.queue_put(magi_queue, [f"message from remote system {i}",np.random.random((100,100))])
         time.sleep(0.1)
 
 def local_test1():
