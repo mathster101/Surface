@@ -69,7 +69,7 @@ class Magi():
         print(args)
         proc = mp.Process(target=func,args=args)
         proc.start()
-        return {proc: time.time()}
+        return [proc, time.time()]
 
 
     def listen_for_orders(self):
@@ -99,9 +99,9 @@ class Magi():
             
             elif order == "handle_proc_timers":
                 now = time.time()
-                for proc in self.local_procs:
-                    if self.local_proc[proc] - now > 3:
-                        print(proc, "has timed out")
+                for item in self.local_procs:
+                    if item[1] - now > 3:
+                        print(item, "has timed out")
 
 
 
