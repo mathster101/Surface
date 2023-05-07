@@ -3,6 +3,7 @@ import multiprocessing as mp
 import os
 import importlib
 import inspect
+import time
 
 def new_bookkeeper(free_port):
     new_bookkeeper = mp.Process(target=bookkeeper,args = (free_port,))
@@ -68,7 +69,7 @@ class Magi():
         print(args)
         proc = mp.Process(target=func,args=args)
         proc.start()
-        return proc
+        return {proc: time.time()}
 
 
     def listen_for_orders(self):
@@ -81,6 +82,7 @@ class Magi():
                 order = "handle_proc_timers"
             else:    
                 order = self.neo.receive_data()
+
             print(order)
             if order == 'initial_heartbeat_check':
                 cores = os.cpu_count()
@@ -94,6 +96,12 @@ class Magi():
                 args = self.neo.receive_data()
                 proc = self.spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
                 self.local_procs.append(proc)
+            
+            elif order == "handle_proc_timers":
+                now = time.time()
+                for proc in self.local_procs:
+                    if self.local_proc[proc] - now > 3:
+                        print(proc, "has timed out")
 
 
 

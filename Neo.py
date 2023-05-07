@@ -19,7 +19,7 @@ class Neo:
     
     def get_new_conn(self, timeout = False):
         if timeout == True:
-            self.sock.settimeout(0.5)
+            self.sock.settimeout(1)
             try:
                 self.conn, self.addr = self.sock.accept()
                 self.sock.settimeout(None)
