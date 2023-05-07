@@ -79,5 +79,5 @@ if __name__ == '__main__':
     # ports = []
     # for i in range(8):
     #     ports.append(magi.Queue())
-    # local_test1()
+    #local_test1()
     master_test4()

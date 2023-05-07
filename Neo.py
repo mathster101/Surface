@@ -1,6 +1,8 @@
 import socket
 import pickle
+import time
 import base64
+import zlib
 
 class Neo:
     def __init__(self):
@@ -15,9 +17,19 @@ class Neo:
         self.sock.bind(('', PORT))
         self.sock.listen(5)
     
-    def get_new_conn(self):
-        self.conn, self.addr = self.sock.accept()
-        return (self.conn, self.addr)
+    def get_new_conn(self, timeout = False):
+        if timeout == True:
+            self.sock.settimeout(0.5)
+            try:
+                self.conn, self.addr = self.sock.accept()
+                self.sock.settimeout(None)
+                return (self.conn, self.addr)
+            except:
+                self.sock.settimeout(None)
+                return "Timeout"
+        else:
+            self.conn, self.addr = self.sock.accept()
+            return (self.conn, self.addr)
 
     def connect_client(self, PORT=9999, IP='127.0.0.1'):
         self.i_am_a = "client"
@@ -25,7 +37,6 @@ class Neo:
 
     def close_conn(self):
         if self.i_am_a=="server":
-            #kind of buggy
             self.conn.close()
         else:
             self.sock.close()
@@ -50,6 +61,7 @@ class Neo:
                     break
         terminate_at = received.find(end_char)
         true_received = received[:terminate_at]
+        true_received = zlib.decompress(true_received)
         true_received = base64.b64decode(true_received)
         self.remnant = received[terminate_at+len("msg-end"):]
         true_received = pickle.loads(true_received)
@@ -58,12 +70,12 @@ class Neo:
     def send_data(self,object_to_send):
         data = pickle.dumps(object_to_send)
         data = base64.b64encode(data)
+        data = zlib.compress(data)
         data += bytes("msg-end",encoding = 'utf-8')
         if self.i_am_a == "server":
             self.conn.sendall(data)
         else:
             self.sock.sendall(data)
-            #time.sleep(0.001)#doesnt work without this :/
 
     def get_my_ip(self):
         return socket.gethostbyname(socket.gethostname())

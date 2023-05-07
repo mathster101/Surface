@@ -76,8 +76,11 @@ class Magi():
         self.neo.start_server(PORT=6969)
         print("Magi slave online")
         while 1:
-            self.neo.get_new_conn()
-            order = self.neo.receive_data()
+            status = self.neo.get_new_conn(timeout = True)
+            if status == "Timeout":
+                order = "handle_proc_timers"
+            else:    
+                order = self.neo.receive_data()
             print(order)
             if order == 'initial_heartbeat_check':
                 cores = os.cpu_count()
