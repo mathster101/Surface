@@ -18,7 +18,7 @@ def dummy2(magi_queue):
     import Magi
     import numpy as np
     magi = Magi.Magi()
-    for i in range(1000000):
+    for i in range(100):
         print(i)
         magi.queue_put(magi_queue, [f"message from remote system {i}",np.random.random((100,100))])
         #time.sleep(0.001)
@@ -64,7 +64,7 @@ def master_test4():
     magi = Magi.Magi()
     magi_queue = magi.queue()
     magi.register_network_thread('192.168.0.6')
-    for i in range(6):
+    for i in range(1):
         magi.process(target = dummy2, args=(magi_queue,))
     while 1:
         data = magi.queue_get(magi_queue)
