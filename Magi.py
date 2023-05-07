@@ -56,7 +56,7 @@ class Magi():
         #tell magi about a network system
         try:
             self.neo.connect_client(PORT=6969,IP = IP_ADDR)
-            self.neo.send_data('initial_heartbeat_check')
+            self.neo.send_data('registration')
             num_cores = self.neo.receive_data()
             self.network_threads[IP_ADDR] = num_cores
             self.neo.close_conn()
@@ -84,7 +84,7 @@ class Magi():
                 order = self.neo.receive_data()
 
             print(order)
-            if order == 'initial_heartbeat_check':
+            if order == 'registration':
                 cores = os.cpu_count()
                 self.neo.send_data(cores)
             
@@ -100,8 +100,11 @@ class Magi():
             elif order == "handle_proc_timers":
                 now = time.time()
                 for item in self.local_procs:
-                    if item[1] - now > 3:
+                    if now - item[1] > 3:
                         print(item, "has timed out")
+                        item[0].terminate()
+                        self.local_procs.remove(item)
+                # TO DO : kill all child procs too
 
 
 
@@ -120,6 +123,7 @@ class Magi():
         self.neo.close_conn()
         #proc = mp.Process(target=target, args=args)
         #return proc
+        #TO DO : return something back to the master
 
     def queue(self):
         #generate new queue object, return details(port num, ip addr)

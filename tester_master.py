@@ -18,7 +18,7 @@ def dummy2(magi_queue):
     import Magi
     import numpy as np
     magi = Magi.Magi()
-    for i in range(100):
+    for i in range(10000):
         print(i)
         magi.queue_put(magi_queue, [f"message from remote system {i}",np.random.random((100,100))])
         #time.sleep(0.001)
@@ -70,7 +70,7 @@ def master_test4():
         data = magi.queue_get(magi_queue)
         if data != None:
             print(data[0])
-        time.sleep(0.001)
+        time.sleep(0.01)
 if __name__ == '__main__':
     # magi = Magi.Magi()
     # queue_deets = magi.queue()
