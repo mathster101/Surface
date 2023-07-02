@@ -3,6 +3,10 @@ import multiprocessing as mp
 import time
 import numpy as np
 
+
+NETWORK_IP = '192.168.1.87'
+
+
 def dummy(text = "None"):
     import time
     index = 0
@@ -41,18 +45,18 @@ def local_test1():
 
 def master_test1():
     magi = Magi.Magi()
-    magi.register_network_thread('192.168.0.6')
+    magi.register_network_thread(NETWORK_IP)
     print(magi.network_threads) 
 
 def master_test2():
     magi = Magi.Magi()
-    magi.register_network_thread('192.168.0.6')    
+    magi.register_network_thread(NETWORK_IP)    
     magi.process(target = dummy, args = ("hey there!"))
 
 def master_test3():
     magi = Magi.Magi()
     magi_queue = magi.queue()
-    magi.register_network_thread('192.168.0.6')   
+    magi.register_network_thread(NETWORK_IP)   
     magi.process(target = dummy2, args=(magi_queue,))
     while 1:
         data = magi.queue_get(magi_queue)
@@ -63,7 +67,7 @@ def master_test3():
 def master_test4():
     magi = Magi.Magi()
     magi_queue = magi.queue()
-    magi.register_network_thread('192.168.0.6')
+    magi.register_network_thread(NETWORK_IP)
     for i in range(1):
         magi.process(target = dummy2, args=(magi_queue,))
     while 1:
@@ -80,4 +84,4 @@ if __name__ == '__main__':
     # for i in range(8):
     #     ports.append(magi.Queue())
     #local_test1()
-    master_test4()
+    master_test3()

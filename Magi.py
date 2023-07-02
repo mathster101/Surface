@@ -5,10 +5,17 @@ import importlib
 import inspect
 import time
 
+#TO DO
+#1.Design Actual process allocation function
+#2.Entity to send out heartbeats to slaves
+
+
 def new_bookkeeper(free_port):
     new_bookkeeper = mp.Process(target=bookkeeper,args = (free_port,))
     return new_bookkeeper
 
+#bookkeepers are procs running on the master
+#there is a bookkeeper for each queue
 def bookkeeper(port):
     queue = []
     neo_inst = Neo.Neo()
@@ -45,6 +52,7 @@ class Magi():
         self.network_threads = {'127.0.0.1': os.cpu_count()}
         self.new_proc_num = 0
         self.local_procs = []
+        self.master_init_procs = []
    
     def __del__(self):
         try:
@@ -63,6 +71,7 @@ class Magi():
         except:
             print(f"error connecting to {IP_ADDR}")
     
+    #spawn the process locally and return its details
     def spawn_local_process(self, path_to_file, args, fname):
         func_lib = importlib.import_module(path_to_file)
         func = getattr(func_lib, fname)
@@ -77,13 +86,15 @@ class Magi():
         self.neo.start_server(PORT=6969)
         print("Magi slave online")
         while 1:
-            status = self.neo.get_new_conn(timeout = True)
-            if status == "Timeout":
+            
+            #if no connection received in the timeslot
+            #go and check existing connections for any timeouts
+            if self.neo.get_new_conn(timeout = True) == "Timeout":
                 order = "handle_proc_timers"
             else:    
                 order = self.neo.receive_data()
+                print(order)
 
-            print(order)
             if order == 'registration':
                 cores = os.cpu_count()
                 self.neo.send_data(cores)
@@ -100,21 +111,24 @@ class Magi():
             elif order == "handle_proc_timers":
                 now = time.time()
                 for item in self.local_procs:
-                    if now - item[1] > 3:
+                    process_start_time = item[1]
+                    if now - process_start_time > 3:
                         print(item, "has timed out")
-                        item[0].terminate()
+                        item[0].terminate()#kill the proc
                         self.local_procs.remove(item)
                 # TO DO : kill all child procs too
 
 
-
+    ##CHECK THE IP!!!
+    #this needs logic to choose a target ip
     def process(self,target,args = None):
-        self.neo.connect_client(PORT=6969,IP = '192.168.0.6')
+        print("going to spawn a new proc")
+        self.neo.connect_client(PORT=6969,IP = '192.168.1.87')
         self.neo.send_data("spawn_process")
         src = inspect.getsource(target)
         self.neo.send_data(str(target.__name__))
         self.neo.send_data(src)
-        if type(args) == type((1,)):
+        if type(args) == type((1,)):#wtf is this????
             pass
         else:
             args = (args,)
