@@ -34,6 +34,7 @@ class Neo:
     def connect_client(self, PORT=9999, IP='127.0.0.1'):
         self.i_am_a = "client"
         self.sock.connect((IP, PORT))
+        return True
 
     def close_conn(self):
         if self.i_am_a=="server":

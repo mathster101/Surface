@@ -8,7 +8,7 @@ import time
 #TO DO
 #1.Design Actual process allocation function
 #2.Entity to send out heartbeats to slaves
-
+master_init_procs = []
 
 def new_bookkeeper(free_port):
     new_bookkeeper = mp.Process(target=bookkeeper,args = (free_port,))
@@ -52,7 +52,6 @@ class Magi():
         self.network_threads = {'127.0.0.1': os.cpu_count()}
         self.new_proc_num = 0
         self.local_procs = []
-        self.master_init_procs = []
    
     def __del__(self):
         try:
@@ -80,7 +79,6 @@ class Magi():
         proc.start()
         return [proc, time.time()]
 
-
     def listen_for_orders(self):
         #run on network systems
         self.neo.start_server(PORT=6969)
@@ -107,17 +105,25 @@ class Magi():
                 args = self.neo.receive_data()
                 proc = self.spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
                 self.local_procs.append(proc)
-            
+                ###############
+                self.neo.get_new_conn(timeout = False)
+                self.neo.send_data(proc[0].pid)
+
             elif order == "handle_proc_timers":
                 now = time.time()
                 for item in self.local_procs:
                     process_start_time = item[1]
-                    if now - process_start_time > 3:
+                    if now - process_start_time > 6:
                         print(item, "has timed out")
                         item[0].terminate()#kill the proc
                         self.local_procs.remove(item)
                 # TO DO : kill all child procs too
-
+            elif order == "hearbeat":
+                PID = self.neo.receive_data()
+                print(f"heartbeat for {PID} received")
+                for item in self.local_procs:
+                    if item[0].pid == PID:
+                        item[1] = time.time()
 
     ##CHECK THE IP!!!
     #this needs logic to choose a target ip
@@ -133,11 +139,41 @@ class Magi():
         else:
             args = (args,)
         self.neo.send_data(args)
-        print("args",args)
+        self.neo.close_conn()
+        ##########################
+        self.neo.connect_client(PORT=6969,IP = '192.168.1.87')
+        pid = self.neo.receive_data()
+        print(pid)
         self.neo.close_conn()
         #proc = mp.Process(target=target, args=args)
         #return proc
         #TO DO : return something back to the master
+
+    def process_internal(self,target,args = None, IP='192.168.1.87'):
+        print("going to spawn a new proc")
+        self.neo.connect_client(PORT=6969,IP = IP)
+        self.neo.send_data("spawn_process")
+        src = inspect.getsource(target)
+        self.neo.send_data(str(target.__name__))
+        self.neo.send_data(src)
+        if type(args) == type((1,)):#wtf is this????
+            pass
+        else:
+            args = (args,)
+        self.neo.send_data(args)
+        self.neo.close_conn()
+        ##########################
+        self.neo.connect_client(PORT=6969,IP = IP)
+        pid = self.neo.receive_data()
+        self.neo.close_conn()
+        return f"{IP}:{pid}"
+        
+
+    def Process(self, target,args = None):
+        global master_init_procs
+        details = self.process_internal(target, args)
+        master_init_procs.append(details)
+    
 
     def queue(self):
         #generate new queue object, return details(port num, ip addr)
@@ -148,7 +184,15 @@ class Magi():
 
     def queue_put(self,q_details, data):
         #add item to queue
-        self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
+        #get and pop item from queue
+        status = None
+        while status == None:
+            try:
+                self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
+                status = "pass"
+            except:
+                time.sleep(0.001)
+                pass
         self.neo.send_data(["put",data])
         data =  self.neo.receive_data()
         self.neo.close_conn()
@@ -156,7 +200,14 @@ class Magi():
 
     def queue_get(self,q_details):
         #get and pop item from queue
-        self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
+        status = None
+        while status == None:
+            try:
+                self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
+                status = "pass"
+            except:
+                time.sleep(0.001)
+                pass
         self.neo.send_data("get")
         data =  self.neo.receive_data()
         self.neo.close_conn()
