@@ -4,11 +4,11 @@ import os
 import importlib
 import inspect
 import time
+import queue
 
 #TO DO
 #1.Design Actual process allocation function
 #2.Entity to send out heartbeats to slaves
-master_init_procs = []
 
 def new_bookkeeper(free_port):
     new_bookkeeper = mp.Process(target=bookkeeper,args = (free_port,))
@@ -52,7 +52,9 @@ class Magi():
         self.network_threads = {'127.0.0.1': os.cpu_count()}
         self.new_proc_num = 0
         self.local_procs = []
-   
+        self.master_proc_init = mp.Queue()
+        self.heart_thread = mp.Process(target=self.heart,args=(self.master_proc_init,))
+        self.heart_thread.start()
     def __del__(self):
         try:
             self.neo.close_conn()
@@ -118,12 +120,16 @@ class Magi():
                         item[0].terminate()#kill the proc
                         self.local_procs.remove(item)
                 # TO DO : kill all child procs too
-            elif order == "hearbeat":
+                # delete temp files associated with the proc
+
+            elif order == "heartbeat":
                 PID = self.neo.receive_data()
-                print(f"heartbeat for {PID} received")
+                print(f"heartbeat for PID:{PID} received",end='')
                 for item in self.local_procs:
-                    if item[0].pid == PID:
+                    print(item[0].pid, PID)
+                    if str(item[0].pid) == PID:
                         item[1] = time.time()
+                        print(item[1])
 
     ##CHECK THE IP!!!
     #this needs logic to choose a target ip
@@ -149,6 +155,24 @@ class Magi():
         #return proc
         #TO DO : return something back to the master
 
+    def heart(self, queue):
+        procs = []
+        while 1:
+            while(queue.empty() == False):
+                proc = queue.get(block=False)
+                procs.append(proc)
+            time.sleep(1)
+            for p in procs:
+                IP = p.split(":")[0]
+                PID = p.split(":")[1]
+                self.neo.close_conn()#clears remnant connections, need to debug
+                self.neo.connect_client(PORT=6969,IP = IP)
+                self.neo.send_data("heartbeat")
+                self.neo.send_data(PID)
+                self.neo.close_conn()
+                print(f"hearbeat sent to {p}")
+
+                
     def process_internal(self,target,args = None, IP='192.168.1.87'):
         print("going to spawn a new proc")
         self.neo.connect_client(PORT=6969,IP = IP)
@@ -162,7 +186,7 @@ class Magi():
             args = (args,)
         self.neo.send_data(args)
         self.neo.close_conn()
-        ##########################
+        #doesn't work without a reconn
         self.neo.connect_client(PORT=6969,IP = IP)
         pid = self.neo.receive_data()
         self.neo.close_conn()
@@ -172,7 +196,7 @@ class Magi():
     def Process(self, target,args = None):
         global master_init_procs
         details = self.process_internal(target, args)
-        master_init_procs.append(details)
+        self.master_proc_init.put(details)
     
 
     def queue(self):
