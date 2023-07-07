@@ -55,6 +55,7 @@ class Magi():
         self.master_proc_init = mp.Queue()
         self.heart_thread = mp.Process(target=self.heart,args=(self.master_proc_init,))
         self.heart_thread.start()
+
     def __del__(self):
         try:
             self.neo.close_conn()
@@ -76,7 +77,6 @@ class Magi():
     def spawn_local_process(self, path_to_file, args, fname):
         func_lib = importlib.import_module(path_to_file)
         func = getattr(func_lib, fname)
-        print(args)
         proc = mp.Process(target=func,args=args)
         proc.start()
         return [proc, time.time()]
@@ -93,7 +93,6 @@ class Magi():
                 order = "handle_proc_timers"
             else:    
                 order = self.neo.receive_data()
-                print(order)
 
             if order == 'registration':
                 cores = os.cpu_count()
@@ -111,6 +110,7 @@ class Magi():
                 ###############
                 self.neo.get_new_conn(timeout = False)
                 self.neo.send_data(proc[0].pid)
+                print(f"spawn new process {fname}->{args}")
 
             elif order == "handle_proc_timers":
                 now = time.time()
@@ -125,14 +125,14 @@ class Magi():
 
             elif order == "heartbeat":
                 PID = self.neo.receive_data()
-                print(f"heartbeat for PID:{PID} received",end='')
+                print(f"heartbeat for PID:{PID} received ",end='')
                 for item in self.local_procs:
                     if str(item[0].pid) == PID:
                         item[1] = time.time()
                         print(item[1])
 
-    ##CHECK THE IP!!!
-    #this needs logic to choose a target ip
+    #deprecated - see Process instead
+    '''
     def process(self,target,args = None):
         print("going to spawn a new proc")
         self.neo.connect_client(PORT=6969,IP = '192.168.1.87')
@@ -154,25 +154,28 @@ class Magi():
         #proc = mp.Process(target=target, args=args)
         #return proc
         #TO DO : return something back to the master
-
+    '''
+    
     def heart(self, queue):
         procs = []
-        local_neo = Neo.Neo()
+        local_neo = Neo.Neo()#using a local neo inst is more reliable
         while 1:
             while(queue.empty() == False):
                 proc = queue.get(block=False)
                 procs.append(proc)
             time.sleep(1)
-            for p in procs:
-                IP = p.split(":")[0]
-                PID = p.split(":")[1]
-                local_neo.close_conn()#clears remnant connections, need to debug
-                local_neo.connect_client(PORT=6969,IP = IP)
-                local_neo.send_data("heartbeat")
-                local_neo.send_data(PID)
-                local_neo.close_conn()
-                print(f"hearbeat sent to {p}")
-
+            if len(procs):
+                print("*"*25)
+                for p in procs:
+                    IP = p.split(":")[0]
+                    PID = p.split(":")[1]
+                    local_neo.close_conn()#clears remnant connections, need to debug
+                    local_neo.connect_client(PORT=6969,IP = IP)
+                    local_neo.send_data("heartbeat")
+                    local_neo.send_data(PID)
+                    local_neo.close_conn()
+                    print(f"hearbeat sent to {p}")
+                print("*"*25)
                 
     def process_internal(self,target,args = None, IP='192.168.1.87'):
         print("going to spawn a new proc")
@@ -181,7 +184,7 @@ class Magi():
         src = inspect.getsource(target)
         self.neo.send_data(str(target.__name__))
         self.neo.send_data(src)
-        if type(args) == type((1,)):#wtf is this????
+        if str(type(args)) == "<class 'tuple'>":
             pass
         else:
             args = (args,)
@@ -210,32 +213,34 @@ class Magi():
     def queue_put(self,q_details, data):
         #add item to queue
         #get and pop item from queue
+        local_neo = Neo.Neo()
         status = None
         while status == None:
             try:
-                self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
+                local_neo.connect_client(PORT=q_details[0], IP=q_details[1])
                 status = "pass"
             except:
                 time.sleep(0.001)
                 pass
-        self.neo.send_data(["put",data])
-        data =  self.neo.receive_data()
-        self.neo.close_conn()
+        local_neo.send_data(["put",data])
+        data =  local_neo.receive_data()
+        local_neo.close_conn()
         return data
 
     def queue_get(self,q_details):
         #get and pop item from queue
+        local_neo = Neo.Neo()
         status = None
         while status == None:
             try:
-                self.neo.connect_client(PORT=q_details[0], IP=q_details[1])
+                local_neo.connect_client(PORT=q_details[0], IP=q_details[1])
                 status = "pass"
             except:
                 time.sleep(0.001)
                 pass
-        self.neo.send_data("get")
-        data =  self.neo.receive_data()
-        self.neo.close_conn()
+        local_neo.send_data("get")
+        data =  local_neo.receive_data()
+        local_neo.close_conn()
         return data
     
     def kill_queues(self):

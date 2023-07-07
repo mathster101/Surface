@@ -12,6 +12,12 @@ class Neo:
         self.i_am_a = None
         self.remnant = b''
 
+    def __del__(self):
+        try:
+            self.sock.close_conn()
+        except:
+            pass
+
     def start_server(self, PORT=9999):
         self.i_am_a = "server"
         self.sock.bind(('', PORT))
