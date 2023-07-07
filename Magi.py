@@ -107,6 +107,7 @@ class Magi():
                 args = self.neo.receive_data()
                 proc = self.spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
                 self.local_procs.append(proc)
+                self.new_proc_num += 1
                 ###############
                 self.neo.get_new_conn(timeout = False)
                 self.neo.send_data(proc[0].pid)
@@ -126,7 +127,6 @@ class Magi():
                 PID = self.neo.receive_data()
                 print(f"heartbeat for PID:{PID} received",end='')
                 for item in self.local_procs:
-                    print(item[0].pid, PID)
                     if str(item[0].pid) == PID:
                         item[1] = time.time()
                         print(item[1])
@@ -157,6 +157,7 @@ class Magi():
 
     def heart(self, queue):
         procs = []
+        local_neo = Neo.Neo()
         while 1:
             while(queue.empty() == False):
                 proc = queue.get(block=False)
@@ -165,11 +166,11 @@ class Magi():
             for p in procs:
                 IP = p.split(":")[0]
                 PID = p.split(":")[1]
-                self.neo.close_conn()#clears remnant connections, need to debug
-                self.neo.connect_client(PORT=6969,IP = IP)
-                self.neo.send_data("heartbeat")
-                self.neo.send_data(PID)
-                self.neo.close_conn()
+                local_neo.close_conn()#clears remnant connections, need to debug
+                local_neo.connect_client(PORT=6969,IP = IP)
+                local_neo.send_data("heartbeat")
+                local_neo.send_data(PID)
+                local_neo.close_conn()
                 print(f"hearbeat sent to {p}")
 
                 
