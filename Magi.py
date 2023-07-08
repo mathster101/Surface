@@ -163,7 +163,7 @@ class Magi():
             while(queue.empty() == False):
                 proc = queue.get(block=False)
                 procs.append(proc)
-            time.sleep(3)
+            time.sleep(1)
             if len(procs):
                 print("*"*25)
                 for p in procs:

@@ -7,6 +7,7 @@ import zlib
 class Neo:
     def __init__(self):
         self.sock = socket.socket()
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.conn = None
         self.addr = None
         self.i_am_a = None

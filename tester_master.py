@@ -24,7 +24,7 @@ def dummy2(magi_queue):
     magi = Magi.Magi()
     for i in range(10000):
         #print(i)
-        magi.queue_put(magi_queue, [f"message from remote system {i}",np.random.random((100,100))])
+        magi.queue_put(magi_queue, [f":message from remote system {i}",np.random.random((100,100))])
         #time.sleep(0.001)
 
 def local_test1():
@@ -69,7 +69,7 @@ def master_test4():
     magi = Magi.Magi()
     magi_queue = magi.queue()
     magi.register_network_thread(NETWORK_IP)
-    for i in range(2):
+    for i in range(3):
         magi.Process(target = dummy2, args=(magi_queue,))
     while 1:
         data = magi.queue_get(magi_queue)
