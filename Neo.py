@@ -38,8 +38,10 @@ class Neo:
             return (self.conn, self.addr)
 
     def connect_client(self, PORT=9999, IP='127.0.0.1'):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.i_am_a = "client"
         self.sock.connect((IP, PORT))
+        #print(self.sock.getsockname())
         return True
 
     def close_conn(self):

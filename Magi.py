@@ -46,12 +46,12 @@ def bookkeeper(port):
 class Magi():
     def __init__(self):
         self.free_port = 1234
-        self.bookkeepers = []
-        self.connected_to_queue = False
-        self.neo = Neo.Neo()
-        self.network_threads = {'127.0.0.1': os.cpu_count()}
         self.new_proc_num = 0
+        self.bookkeepers = []
         self.local_procs = []
+        self.network_threads = {'127.0.0.1': os.cpu_count()}
+        self.neo = Neo.Neo()
+        self.my_ip = self.neo.get_my_ip()
         self.master_proc_init = mp.Queue()
         self.heart_thread = mp.Process(target=self.heart,args=(self.master_proc_init,))
         self.heart_thread.start()
@@ -106,6 +106,7 @@ class Magi():
                 args = self.neo.receive_data()
                 proc = self.spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
                 self.local_procs.append(proc)
+                os.remove(f"tmp_{self.new_proc_num}.py")
                 self.new_proc_num += 1
                 ###############
                 self.neo.get_new_conn(timeout = False)
@@ -116,12 +117,11 @@ class Magi():
                 now = time.time()
                 for item in self.local_procs:
                     process_start_time = item[1]
-                    if now - process_start_time > 6:
+                    if now - process_start_time > 5:
                         print(item, "has timed out")
                         item[0].terminate()#kill the proc
                         self.local_procs.remove(item)
                 # TO DO : kill all child procs too
-                # delete temp files associated with the proc
 
             elif order == "heartbeat":
                 PID = self.neo.receive_data()
@@ -163,7 +163,7 @@ class Magi():
             while(queue.empty() == False):
                 proc = queue.get(block=False)
                 procs.append(proc)
-            time.sleep(1)
+            time.sleep(3)
             if len(procs):
                 print("*"*25)
                 for p in procs:
@@ -174,7 +174,7 @@ class Magi():
                     local_neo.send_data("heartbeat")
                     local_neo.send_data(PID)
                     local_neo.close_conn()
-                    print(f"hearbeat sent to {p}")
+                    print(f"hearbeat sent to {IP} for PID:{PID}")
                 print("*"*25)
                 
     def process_internal(self,target,args = None, IP='192.168.1.87'):
@@ -208,7 +208,7 @@ class Magi():
         self.bookkeepers.append(new_bookkeeper(self.free_port))
         self.bookkeepers[-1].start()
         self.free_port += 1
-        return [self.free_port - 1, self.neo.get_my_ip()] 
+        return [self.free_port - 1, self.my_ip] 
 
     def queue_put(self,q_details, data):
         #add item to queue

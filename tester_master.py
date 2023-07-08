@@ -73,6 +73,7 @@ def master_test4():
         magi.Process(target = dummy2, args=(magi_queue,))
     while 1:
         data = magi.queue_get(magi_queue)
+        #continue
         if data != None:
             print(data[0])
         #time.sleep(0.01)
