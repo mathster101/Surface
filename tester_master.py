@@ -47,6 +47,8 @@ def local_test1():
 def master_test1():
     magi = Magi.Magi()
     magi.register_network_thread(NETWORK_IP)
+    magi.register_network_thread(NETWORK_IP)
+    magi.register_network_thread(NETWORK_IP)
     print(magi.network_threads) 
 
 def master_test2():
@@ -88,4 +90,5 @@ if __name__ == '__main__':
     # for i in range(8):
     #     ports.append(magi.Queue())
     #local_test1()
-    master_test4()
+    master_test1()
+    print("done")

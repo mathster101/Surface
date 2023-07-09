@@ -25,6 +25,7 @@ class Neo:
         self.sock.listen(5)
     
     def get_new_conn(self, timeout = False):
+        self.i_am_a = "server"
         if timeout == True:
             self.sock.settimeout(1)
             try:
@@ -50,7 +51,6 @@ class Neo:
             self.conn.close()
         else:
             self.sock.close()
-        self.sock = socket.socket()
         self.conn = None
         self.addr = None
         self.i_am_a = None

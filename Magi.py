@@ -72,7 +72,7 @@ class Magi():
             self.neo.send_data('registration')
             num_cores = self.neo.receive_data()
             self.network_threads[IP_ADDR] = num_cores
-            self.neo.close_conn()
+            #self.neo.close_conn()
         except:
             print(f"error connecting to {IP_ADDR}")
     
@@ -100,6 +100,8 @@ class Magi():
             if order == 'registration':
                 cores = os.cpu_count()
                 self.neo.send_data(cores)
+                self.neo.close_conn()
+                print("registration over")
             
             elif order == 'spawn_process':
                 fname = self.neo.receive_data()
