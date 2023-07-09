@@ -22,7 +22,6 @@ def bookkeeper(port):
     queue = []
     neo_inst = Neo.Neo()
     neo_inst.start_server(PORT=port)
-    #neo_inst.get_new_conn()
     while True:
         neo_inst.get_new_conn()
         rcvd = neo_inst.receive_data()
@@ -131,10 +130,10 @@ class Magi():
                 # TO DO : kill all child procs too
 
             elif order == "heartbeat":
-                PID = self.neo.receive_data()
-                print(f"heartbeat for PID:{PID} received ",end='')
+                PIDs = self.neo.receive_data()
+                print(f"heartbeats for PIDs:{PIDs} received ",end='')
                 for item in self.local_procs:
-                    if str(item[0].pid) == PID:
+                    if str(item[0].pid) in PIDs:
                         item[1] = time.time()
                         print(item[1])
                 self.neo.close_conn()
@@ -142,30 +141,33 @@ class Magi():
 
     #send out heartbeats to slave devices    
     def heart(self, queue):
-        procs = []
+        procs = {}
         local_neo = Neo.Neo()#using a local neo inst is more reliable
+        
         while 1:
+            time.sleep(1)
             while(queue.empty() == False):
                 proc = queue.get(block=False)
-                procs.append(proc)
-            time.sleep(1)
+                if proc not in procs:
+                    procs[proc[0]] = proc[1]
+                else:
+                    procs[proc[0]].append(proc[1])
             if len(procs):
                 print("*"*25)
-                for p in procs:
-                    IP = p.split(":")[0]
-                    PID = p.split(":")[1]
+                for IP in procs:
+                    PIDs = procs[IP]
                     local_neo.close_conn()#clears remnant connections, need to debug
                     pass_ = False
                     while not pass_:
                         try:
                             local_neo.connect_client(PORT=6969,IP = IP)
                             local_neo.send_data("heartbeat")
-                            local_neo.send_data(PID)
+                            local_neo.send_data(PIDs)
                             local_neo.close_conn()
                             pass_ = True
                         except:
                             time.sleep(0.1)
-                    print(f"hearbeat sent to {IP} for PID:{PID}")
+                    print(f"hearbeat sent to {IP} for PIDs:{PIDs}")
                 print("*"*25)
                 
     #actually sends out message to start process
@@ -186,7 +188,7 @@ class Magi():
         self.neo.connect_client(PORT=6969,IP = IP)
         pid = self.neo.receive_data()
         self.neo.close_conn()
-        return f"{IP}:{pid}"
+        return (IP,pid)
         
     #wrapper to choose destination and spawn process
     def Process(self, target,args = None):
