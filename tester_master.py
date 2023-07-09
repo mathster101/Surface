@@ -23,10 +23,10 @@ def dummy2(magi_queue):
     import Magi
     import numpy as np
     magi = Magi.Magi()
-    for i in range(200):
+    for i in range(2000):
         #print(i)
-        magi.queue_put(magi_queue, [f"{os.getpid()}:message from remote system {i}",np.random.random((100,1000))])
-        time.sleep(0.01)
+        magi.queue_put(magi_queue, [f"{os.getpid()}:message from remote system {i}",np.random.random((100,100))])
+        time.sleep(0.1)
 
 def local_test1():
     iters = 1000
@@ -72,7 +72,7 @@ def master_test4():
     magi = Magi.Magi()
     magi_queue = magi.queue()
     magi.register_network_thread(NETWORK_IP)
-    for i in range(3):
+    for i in range(10):
         magi.Process(target = dummy2, args=(magi_queue,))
     while 1:
         data = magi.queue_get(magi_queue)
@@ -90,5 +90,5 @@ if __name__ == '__main__':
     # for i in range(8):
     #     ports.append(magi.Queue())
     #local_test1()
-    master_test1()
+    master_test4()
     print("done")

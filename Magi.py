@@ -43,6 +43,7 @@ def bookkeeper(port):
         elif rcvd == "kill":
             #print("terminate")
             break
+        neo_inst.close_conn()
 
 
 class Magi():
@@ -72,7 +73,7 @@ class Magi():
             self.neo.send_data('registration')
             num_cores = self.neo.receive_data()
             self.network_threads[IP_ADDR] = num_cores
-            #self.neo.close_conn()
+            self.neo.close_conn()
         except:
             print(f"error connecting to {IP_ADDR}")
     
@@ -117,7 +118,8 @@ class Magi():
                 self.neo.get_new_conn(timeout = False)
                 self.neo.send_data(proc[0].pid)
                 print(f"spawn new process {fname}->{args}")
-
+                self.neo.close_conn()
+                
             elif order == "handle_proc_timers":
                 now = time.time()
                 for item in self.local_procs:
@@ -135,6 +137,7 @@ class Magi():
                     if str(item[0].pid) == PID:
                         item[1] = time.time()
                         print(item[1])
+                self.neo.close_conn()
 
 
     #send out heartbeats to slave devices    
