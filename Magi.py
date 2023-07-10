@@ -39,7 +39,7 @@ def bookkeeper(port):
 
         elif rcvd[0] == "put":
             queue.append(rcvd[1])
-            neo_inst.send_data("done")
+            neo_inst.send_data(True)
 
         elif rcvd == "debug":
             print(queue)
@@ -223,9 +223,11 @@ class Magi():
                 time.sleep(0.001)
                 pass
         local_neo.send_data(["put",data])
-        sucess =  local_neo.receive_data()
+        success =  local_neo.receive_data()
         local_neo.close_conn()
         end_time = time.time()
+        if not success:
+            return -1
         if DEBUG:
             with open("queue_logs.csv", 'a') as f:
                 f.write(f"put,{end_time-start_time},{get_obj_size(data)}\n")
