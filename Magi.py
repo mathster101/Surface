@@ -5,11 +5,16 @@ import importlib
 import inspect
 import time
 import queue
+import gc
+import sys
+
+DEBUG = False#True
 
 #TO DO
 #1.Design Actual process allocation function
 #2.Heartbeats need to be sent out as a group
 #3.Investigate fixed ports per Neo instance
+#4.Check if child procs get handled naturally
 
 #spawn new bookkeeper
 def new_bookkeeper(free_port):
@@ -48,11 +53,11 @@ def bookkeeper(port):
 class Magi():
     
     def __init__(self):
-        self.free_port = 1234
+        self.free_port = 12345
         self.new_proc_num = 0
         self.bookkeepers = []
         self.local_procs = []
-        self.network_threads = {'127.0.0.1': os.cpu_count()}
+        self.network_threads = {'0.0.0.0': [os.cpu_count(), 0]}
         self.neo = Neo.Neo()
         self.my_ip = self.neo.get_my_ip()
         self.master_proc_init = mp.Queue()
@@ -71,10 +76,12 @@ class Magi():
             self.neo.connect_client(PORT=6969,IP = IP_ADDR)
             self.neo.send_data('registration')
             num_cores = self.neo.receive_data()
-            self.network_threads[IP_ADDR] = num_cores
+            self.network_threads[IP_ADDR] = [num_cores, 0]
             self.neo.close_conn()
+            return True
         except:
             print(f"error connecting to {IP_ADDR}")
+            return False
     
     #spawn the process locally and return its details
     def spawn_local_process(self, path_to_file, args, fname):
@@ -89,20 +96,21 @@ class Magi():
         self.neo.start_server(PORT=6969)
         print("Magi slave online")
         while 1:
-            
             #if no connection received in the timeslot
             #go and check existing connections for any timeouts
             if self.neo.get_new_conn(timeout = True) == "Timeout":
                 order = "handle_proc_timers"
             else:    
                 order = self.neo.receive_data()
-
+            #return number of cores to registering entity
             if order == 'registration':
                 cores = os.cpu_count()
-                self.neo.send_data(cores)
+                self.neo.send_data([cores, 0])
                 self.neo.close_conn()
                 print("registration over")
             
+            #receive function body and args and
+            #spawn a new process
             elif order == 'spawn_process':
                 fname = self.neo.receive_data()
                 function_text = self.neo.receive_data()
@@ -111,14 +119,15 @@ class Magi():
                 args = self.neo.receive_data()
                 proc = self.spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
                 self.local_procs.append(proc)
-                os.remove(f"tmp_{self.new_proc_num}.py")
+                os.remove(f"tmp_{self.new_proc_num}.py")#remove temp file
                 self.new_proc_num += 1
                 ###############
                 self.neo.get_new_conn(timeout = False)
                 self.neo.send_data(proc[0].pid)
                 print(f"spawn new process {fname}->{args}")
                 self.neo.close_conn()
-                
+            
+            #check for timed out procs
             elif order == "handle_proc_timers":
                 now = time.time()
                 for item in self.local_procs:
@@ -127,29 +136,27 @@ class Magi():
                         print(item, "has timed out")
                         item[0].terminate()#kill the proc
                         self.local_procs.remove(item)
-                # TO DO : kill all child procs too
 
+            #refresh proc times using received heartbeats
             elif order == "heartbeat":
                 PIDs = self.neo.receive_data()
-                print(f"heartbeats for PIDs:{PIDs} received ",end='')
+                now = time.time()
+                print(f"heartbeats for PIDs:{PIDs} received {now}")
                 for item in self.local_procs:
-                    if str(item[0].pid) in PIDs:
-                        item[1] = time.time()
-                        print(item[1])
+                    if item[0].pid in PIDs:
+                        item[1] = now
                 self.neo.close_conn()
-
 
     #send out heartbeats to slave devices    
     def heart(self, queue):
         procs = {}
         local_neo = Neo.Neo()#using a local neo inst is more reliable
-        
         while 1:
             time.sleep(1)
             while(queue.empty() == False):
                 proc = queue.get(block=False)
-                if proc not in procs:
-                    procs[proc[0]] = proc[1]
+                if proc[0] not in procs:
+                    procs[proc[0]] = [proc[1]]
                 else:
                     procs[proc[0]].append(proc[1])
             if len(procs):
@@ -165,13 +172,13 @@ class Magi():
                             local_neo.send_data(PIDs)
                             local_neo.close_conn()
                             pass_ = True
+                            print(f"hearbeat sent to {IP} for PIDs:{PIDs}")
                         except:
                             time.sleep(0.1)
-                    print(f"hearbeat sent to {IP} for PIDs:{PIDs}")
                 print("*"*25)
                 
     #actually sends out message to start process
-    def process_internal(self,target,args = None, IP='192.168.1.87'):
+    def process_internal(self,target,args = None, IP='192.168.1.11'):
         print("going to spawn a new proc")
         self.neo.connect_client(PORT=6969,IP = IP)
         self.neo.send_data("spawn_process")
@@ -203,9 +210,9 @@ class Magi():
         self.free_port += 1
         return [self.free_port - 1, self.my_ip] 
 
-
     #add item to queue
     def queue_put(self,q_details, data):
+        start_time = time.time()
         local_neo = Neo.Neo()
         status = None
         while status == None:
@@ -216,12 +223,17 @@ class Magi():
                 time.sleep(0.001)
                 pass
         local_neo.send_data(["put",data])
-        data =  local_neo.receive_data()
+        sucess =  local_neo.receive_data()
         local_neo.close_conn()
+        end_time = time.time()
+        if DEBUG:
+            with open("queue_logs.csv", 'a') as f:
+                f.write(f"put,{end_time-start_time},{get_obj_size(data)}\n")
         return data
 
     #get and pop item from queue
     def queue_get(self,q_details):
+        start_time = time.time()
         local_neo = Neo.Neo()
         status = None
         while status == None:
@@ -234,6 +246,10 @@ class Magi():
         local_neo.send_data("get")
         data =  local_neo.receive_data()
         local_neo.close_conn()
+        end_time = time.time()
+        if DEBUG:
+            with open("queue_logs.csv", 'a') as f:
+                f.write(f"get,{end_time-start_time},{get_obj_size(data)}\n")        
         return data
 
     #delete all queues    
@@ -243,7 +259,30 @@ class Magi():
             p.kill()
 
 
+def get_obj_size(obj):
+    #from https://stackoverflow.com/a/53705610
+    marked = {id(obj)}
+    obj_q = [obj]
+    sz = 0
 
+    while obj_q:
+        sz += sum(map(sys.getsizeof, obj_q))
+
+        # Lookup all the object referred to by the object in obj_q.
+        # See: https://docs.python.org/3.7/library/gc.html#gc.get_referents
+        all_refr = ((id(o), o) for o in gc.get_referents(*obj_q))
+
+        # Filter object that are already marked.
+        # Using dict notation will prevent repeated objects.
+        new_refr = {o_id: o for o_id, o in all_refr if o_id not in marked and not isinstance(o, type)}
+
+        # The new obj_q will be the ones that were not marked,
+        # and we will update marked with their ids so we will
+        # not traverse them again.
+        obj_q = new_refr.values()
+        marked.update(new_refr.keys())
+
+    return sz
 
 if __name__ == "__main__":
     m = Magi()

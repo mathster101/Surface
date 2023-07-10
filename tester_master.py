@@ -4,7 +4,7 @@ import time
 import numpy as np
 
 
-NETWORK_IP = '192.168.1.87'
+NETWORK_IP = '192.168.1.11'
 
 
 def dummy(text = "None"):
@@ -23,10 +23,11 @@ def dummy2(magi_queue):
     import Magi
     import numpy as np
     magi = Magi.Magi()
-    for i in range(2000):
+    arr = np.random.random((100,100))
+    for i in range(20000):
         #print(i)
-        magi.queue_put(magi_queue, [f"{os.getpid()}:message from remote system {i}",np.random.random((100,100))])
-        time.sleep(0.1)
+        magi.queue_put(magi_queue, [f"{os.getpid()}:message from remote system {i}",arr])
+        #time.sleep(0.1)
 
 def local_test1():
     iters = 1000
@@ -72,7 +73,7 @@ def master_test4():
     magi = Magi.Magi()
     magi_queue = magi.queue()
     magi.register_network_thread(NETWORK_IP)
-    for i in range(10):
+    for i in range(3):
         magi.Process(target = dummy2, args=(magi_queue,))
     while 1:
         data = magi.queue_get(magi_queue)
