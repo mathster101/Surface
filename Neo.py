@@ -61,12 +61,12 @@ class Neo:
         end_char = bytes("msg-end", encoding = 'utf-8')
         if self.i_am_a == "server":
             while 1:
-                received += self.conn.recv(1024)
+                received += self.conn.recv(2**16)
                 if end_char in received:
                     break
         else:
             while 1:    
-                received += self.sock.recv(1024)
+                received += self.sock.recv(2**16)
                 if end_char in received:
                     break
         terminate_at = received.find(end_char)

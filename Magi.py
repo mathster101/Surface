@@ -4,7 +4,6 @@ import os
 import importlib
 import inspect
 import time
-import queue
 import gc
 import sys
 
@@ -15,7 +14,8 @@ DEBUG = False#True
 #2.Heartbeats need to be sent out as a group
 #3.Investigate fixed ports per Neo instance
 #4.Check if child procs get handled naturally
-
+#5.Think of some way to 'join' procs
+#6.Let magi change the neo buffer read size dynamically
 #spawn new bookkeeper
 def new_bookkeeper(free_port):
     new_bookkeeper = mp.Process(target=bookkeeper,args = (free_port,))
@@ -132,7 +132,7 @@ class Magi():
                 now = time.time()
                 for item in self.local_procs:
                     process_start_time = item[1]
-                    if now - process_start_time > 6:
+                    if now - process_start_time > 3:
                         print(item, "has timed out")
                         item[0].terminate()#kill the proc
                         self.local_procs.remove(item)
