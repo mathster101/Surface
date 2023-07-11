@@ -25,21 +25,21 @@ def new_bookkeeper(free_port):
 #there is a bookkeeper for each queue
 def bookkeeper(port):
     queue = []
-    neo_inst = Neo.Neo()
-    neo_inst.start_server(PORT=port)
+    local_neo = Neo.Neo()
+    local_neo.start_server(PORT=port)
     while True:
-        neo_inst.get_new_conn()
-        rcvd = neo_inst.receive_data()
+        local_neo.get_new_conn()
+        rcvd = local_neo.receive_data()
         if rcvd == "get":
             if len(queue) == 0:
                 data = None
             else:
                 data = queue.pop()
-            neo_inst.send_data(data)
+            local_neo.send_data(data)
 
         elif rcvd[0] == "put":
             queue.append(rcvd[1])
-            neo_inst.send_data(True)
+            local_neo.send_data(True)
 
         elif rcvd == "debug":
             print(queue)
@@ -47,7 +47,7 @@ def bookkeeper(port):
         elif rcvd == "kill":
             #print("terminate")
             break
-        neo_inst.close_conn()
+        local_neo.close_conn()
 
 
 class Magi():
@@ -58,26 +58,22 @@ class Magi():
         self.bookkeepers = []
         self.local_procs = []
         self.network_threads = {'0.0.0.0': [os.cpu_count(), 0]}
-        self.neo = Neo.Neo()
-        self.my_ip = self.neo.get_my_ip()
+        local_neo = Neo.Neo()
+        self.my_ip = local_neo.get_my_ip()
         self.master_proc_init = mp.Queue()
         self.heart_thread = mp.Process(target=self.heart,args=(self.master_proc_init,))
         self.heart_thread.start()
 
-    def __del__(self):
-        try:
-            self.neo.close_conn()
-        except:
-            pass
-    
+
     #tell magi about a network system
     def register_network_thread(self,IP_ADDR):
         try:
-            self.neo.connect_client(PORT=6969,IP = IP_ADDR)
-            self.neo.send_data('registration')
-            num_cores = self.neo.receive_data()
+            local_neo = Neo.Neo()
+            local_neo.connect_client(PORT=6969,IP = IP_ADDR)
+            local_neo.send_data('registration')
+            num_cores = local_neo.receive_data()
             self.network_threads[IP_ADDR] = [num_cores, 0]
-            self.neo.close_conn()
+            local_neo.close_conn()
             return True
         except:
             print(f"error connecting to {IP_ADDR}")
@@ -93,39 +89,38 @@ class Magi():
 
     #run on network systems
     def listen_for_orders(self):
-        self.neo.start_server(PORT=6969)
+        local_neo = Neo.Neo()
+        local_neo.start_server(PORT=6969)
         print("Magi slave online")
         while 1:
             #if no connection received in the timeslot
             #go and check existing connections for any timeouts
-            if self.neo.get_new_conn(timeout = True) == "Timeout":
+            if local_neo.get_new_conn(timeout = True) == "Timeout":
                 order = "handle_proc_timers"
             else:    
-                order = self.neo.receive_data()
+                order = local_neo.receive_data()
             #return number of cores to registering entity
             if order == 'registration':
                 cores = os.cpu_count()
-                self.neo.send_data([cores, 0])
-                self.neo.close_conn()
+                local_neo.send_data([cores, 0])
+                local_neo.close_conn()
                 print("registration over")
             
             #receive function body and args and
             #spawn a new process
             elif order == 'spawn_process':
-                fname = self.neo.receive_data()
-                function_text = self.neo.receive_data()
+                fname = local_neo.receive_data()
+                function_text = local_neo.receive_data()
                 with open(f"tmp_{self.new_proc_num}.py","w") as f:
                     f.write(function_text)
-                args = self.neo.receive_data()
+                args = local_neo.receive_data()
                 proc = self.spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
                 self.local_procs.append(proc)
                 os.remove(f"tmp_{self.new_proc_num}.py")#remove temp file
                 self.new_proc_num += 1
-                ###############
-                #self.neo.get_new_conn(timeout = False)
-                self.neo.send_data(proc[0].pid)
+                local_neo.send_data(proc[0].pid)
                 print(f"spawn new process {fname}->{args}")
-                self.neo.close_conn()
+                local_neo.close_conn()
             
             #check for timed out procs
             elif order == "handle_proc_timers":
@@ -139,13 +134,13 @@ class Magi():
 
             #refresh proc times using received heartbeats
             elif order == "heartbeat":
-                PIDs = self.neo.receive_data()
+                PIDs = local_neo.receive_data()
                 now = time.time()
                 print(f"heartbeats for PIDs:{PIDs} received {now}")
                 for item in self.local_procs:
                     if item[0].pid in PIDs:
                         item[1] = now
-                self.neo.close_conn()
+                local_neo.close_conn()
 
     #send out heartbeats to slave devices    
     def heart(self, queue):
@@ -179,22 +174,20 @@ class Magi():
                 
     #actually sends out message to start process
     def process_internal(self,target,args = None, IP='192.168.1.11'):
+        local_neo = Neo.Neo()
         print("going to spawn a new proc")
-        self.neo.connect_client(PORT=6969,IP = IP)
-        self.neo.send_data("spawn_process")
+        local_neo.connect_client(PORT=6969,IP = IP)
+        local_neo.send_data("spawn_process")
         src = inspect.getsource(target)
-        self.neo.send_data(str(target.__name__))
-        self.neo.send_data(src)
+        local_neo.send_data(str(target.__name__))
+        local_neo.send_data(src)
         if str(type(args)) == "<class 'tuple'>":
             pass
         else:
             args = (args,)
-        self.neo.send_data(args)
-        #self.neo.close_conn()
-        #doesn't work without a reconn
-        #self.neo.connect_client(PORT=6969,IP = IP)
-        pid = self.neo.receive_data()
-        self.neo.close_conn()
+        local_neo.send_data(args)
+        pid = local_neo.receive_data()
+        local_neo.close_conn()
         return (IP,pid)
         
     #wrapper to choose destination and spawn process
