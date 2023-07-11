@@ -59,12 +59,12 @@ class Neo:
     def receive_data(self):
         received = self.remnant
         end_char = bytes("msg-end", encoding = 'utf-8')
-        if self.i_am_a == "server":
+        if self.i_am_a == "server" and end_char not in self.remnant:
             while 1:
                 received += self.conn.recv(2**16)
                 if end_char in received:
                     break
-        else:
+        elif self.i_am_a =="client"  and end_char not in self.remnant:
             while 1:    
                 received += self.sock.recv(2**16)
                 if end_char in received:

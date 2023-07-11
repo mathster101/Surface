@@ -122,7 +122,7 @@ class Magi():
                 os.remove(f"tmp_{self.new_proc_num}.py")#remove temp file
                 self.new_proc_num += 1
                 ###############
-                self.neo.get_new_conn(timeout = False)
+                #self.neo.get_new_conn(timeout = False)
                 self.neo.send_data(proc[0].pid)
                 print(f"spawn new process {fname}->{args}")
                 self.neo.close_conn()
@@ -190,9 +190,9 @@ class Magi():
         else:
             args = (args,)
         self.neo.send_data(args)
-        self.neo.close_conn()
+        #self.neo.close_conn()
         #doesn't work without a reconn
-        self.neo.connect_client(PORT=6969,IP = IP)
+        #self.neo.connect_client(PORT=6969,IP = IP)
         pid = self.neo.receive_data()
         self.neo.close_conn()
         return (IP,pid)
