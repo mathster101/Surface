@@ -34,7 +34,7 @@ def bookkeeper(port):
             if len(queue) == 0:
                 data = None
             else:
-                data = queue.pop()
+                data = queue.pop(0)
             local_neo.send_data(data)
 
         elif rcvd[0] == "put":
