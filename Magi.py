@@ -11,8 +11,8 @@ DEBUG = False#True
 
 #TO DO
 #1.Design Actual process allocation function
-#2.Heartbeats need to be sent out as a group
-#3.Investigate fixed ports per Neo instance
+#2.Heartbeats need to be sent out as a group✔️
+#3.Investigate fixed ports per Neo instance✔️
 #4.Check if child procs get handled naturally
 #5.Think of some way to 'join' procs
 #6.Let magi change the neo buffer read size dynamically
@@ -253,9 +253,8 @@ class Magi():
             p = self.bookkeepers.pop()
             p.kill()
 
-
+#from https://stackoverflow.com/a/53705610
 def get_obj_size(obj):
-    #from https://stackoverflow.com/a/53705610
     marked = {id(obj)}
     obj_q = [obj]
     sz = 0
@@ -276,7 +275,6 @@ def get_obj_size(obj):
         # not traverse them again.
         obj_q = new_refr.values()
         marked.update(new_refr.keys())
-
     return sz
 
 if __name__ == "__main__":

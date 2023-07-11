@@ -12,7 +12,7 @@ class Neo:
         self.addr = None
         self.i_am_a = None
         self.last_used_port = None
-        self.remnant = b''
+        self.__remnant = b''
 
     def __del__(self):
         try:
@@ -45,16 +45,6 @@ class Neo:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((IP, PORT))
         self.last_used_port = self.sock.getsockname()[1]
-        #print(self.sock.getsockname())
-        return True
-
-    def connect_client_bindto(self,PORT=9999, IP='127.0.0.1', BIND_TO=None):
-        self.i_am_a = "client"
-        if BIND_TO == None:
-            return self.connect_client(PORT, IP)
-        self.sock.bind(('',BIND_TO))
-        self.sock.connect((IP, PORT))
-        self.last_used_port = self.sock.getsockname()[1]
         return True
 
     def close_conn(self):
@@ -67,14 +57,14 @@ class Neo:
         self.i_am_a = None
 
     def receive_data(self):
-        received = self.remnant
+        received = self.__remnant
         end_char = bytes("msg-end", encoding = 'utf-8')
-        if self.i_am_a == "server" and end_char not in self.remnant:
+        if self.i_am_a == "server" and end_char not in self.__remnant:
             while 1:
                 received += self.conn.recv(2**16)
                 if end_char in received:
                     break
-        elif self.i_am_a =="client"  and end_char not in self.remnant:
+        elif self.i_am_a =="client"  and end_char not in self.__remnant:
             while 1:    
                 received += self.sock.recv(2**16)
                 if end_char in received:
@@ -83,7 +73,7 @@ class Neo:
         true_received = received[:terminate_at]
         true_received = zlib.decompress(true_received)
         true_received = base64.b64decode(true_received)
-        self.remnant = received[terminate_at+len("msg-end"):]
+        self.__remnant = received[terminate_at+len("msg-end"):]
         true_received = pickle.loads(true_received)
         return true_received
 
