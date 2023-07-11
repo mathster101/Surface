@@ -11,6 +11,7 @@ class Neo:
         self.conn = None
         self.addr = None
         self.i_am_a = None
+        self.last_used_port = None
         self.remnant = b''
 
     def __del__(self):
@@ -40,10 +41,20 @@ class Neo:
             return (self.conn, self.addr)
 
     def connect_client(self, PORT=9999, IP='127.0.0.1'):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.i_am_a = "client"
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((IP, PORT))
+        self.last_used_port = self.sock.getsockname()[1]
         #print(self.sock.getsockname())
+        return True
+
+    def connect_client_bindto(self,PORT=9999, IP='127.0.0.1', BIND_TO=None):
+        self.i_am_a = "client"
+        if BIND_TO == None:
+            return self.connect_client(PORT, IP)
+        self.sock.bind(('',BIND_TO))
+        self.sock.connect((IP, PORT))
+        self.last_used_port = self.sock.getsockname()[1]
         return True
 
     def close_conn(self):
@@ -54,7 +65,6 @@ class Neo:
         self.conn = None
         self.addr = None
         self.i_am_a = None
-
 
     def receive_data(self):
         received = self.remnant
