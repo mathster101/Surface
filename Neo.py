@@ -1,6 +1,5 @@
 import socket
 import pickle
-import time
 import base64
 import zlib
 
@@ -12,6 +11,8 @@ class Neo:
         self.addr = None
         self.i_am_a = None
         self.remnant = b''
+        self.first_client_connect = True
+        self.client_connect_port = -1
 
     def __del__(self):
         try:
@@ -41,9 +42,19 @@ class Neo:
 
     def connect_client(self, PORT=9999, IP='127.0.0.1'):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        #reuse same port number for repeat connects
+        if self.i_am_a != "client" and not self.first_client_connect:
+            self.sock.bind(('',self.client_connect_port))
+
         self.i_am_a = "client"
-        self.sock.connect((IP, PORT))
-        #print(self.sock.getsockname())
+        if self.first_client_connect:
+            self.sock.connect((IP, PORT))
+            self.first_client_connect = False
+            self.client_connect_port = self.sock.getsockname()[1]
+        else:
+            self.sock.connect((IP, PORT))
+        print(self.sock.getsockname())
         return True
 
     def close_conn(self):
@@ -54,7 +65,6 @@ class Neo:
         self.conn = None
         self.addr = None
         self.i_am_a = None
-
 
     def receive_data(self):
         received = self.remnant

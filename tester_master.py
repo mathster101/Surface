@@ -30,7 +30,7 @@ def dummy2(magi_queue):
         #time.sleep(0.1)
 
 def local_test1():
-    iters = 1000
+    iters = 20
     magi = Magi.Magi()
     queue_deets = magi.queue()
     start = time.time()
@@ -38,6 +38,7 @@ def local_test1():
     for i in range(iters):
         magi.queue_put(queue_deets, data)
     mid = time.time()
+    print("____________________")
     for i in range(iters):
         rcvd = magi.queue_get(queue_deets)
     end = time.time()
@@ -90,6 +91,6 @@ if __name__ == '__main__':
     # ports = []
     # for i in range(8):
     #     ports.append(magi.Queue())
-    #local_test1()
-    master_test4()
-    print("done")
+    local_test1()
+    #master_test4()
+    #print("done")

@@ -16,6 +16,8 @@ DEBUG = False#True
 #4.Check if child procs get handled naturally
 #5.Think of some way to 'join' procs
 #6.Let magi change the neo buffer read size dynamically
+#7.Magi needs to terminate when main proc ends
+
 #spawn new bookkeeper
 def new_bookkeeper(free_port):
     new_bookkeeper = mp.Process(target=bookkeeper,args = (free_port,))
@@ -63,6 +65,7 @@ class Magi():
         self.master_proc_init = mp.Queue()
         self.heart_thread = mp.Process(target=self.heart,args=(self.master_proc_init,))
         self.heart_thread.start()
+        self.queue_op_port = None
 
     def __del__(self):
         try:
@@ -215,6 +218,10 @@ class Magi():
         start_time = time.time()
         local_neo = Neo.Neo()
         status = None
+        if self.queue_op_port != None:#try to reuse same port numbers
+            local_neo.first_client_connect = False
+            local_neo.client_connect_port = self.queue_op_port
+
         while status == None:
             try:
                 local_neo.connect_client(PORT=q_details[0], IP=q_details[1])
@@ -222,6 +229,9 @@ class Magi():
             except:
                 time.sleep(0.001)
                 pass
+        #saving for next time
+        self.queue_op_port = local_neo.client_connect_port
+        #print(local_neo.sock.getsockname())
         local_neo.send_data(["put",data])
         success =  local_neo.receive_data()
         local_neo.close_conn()
@@ -238,6 +248,9 @@ class Magi():
         start_time = time.time()
         local_neo = Neo.Neo()
         status = None
+        if self.queue_op_port != None:#try to reuse same port numbers
+            local_neo.first_client_connect = False
+            local_neo.client_connect_port = self.queue_op_port
         while status == None:
             try:
                 local_neo.connect_client(PORT=q_details[0], IP=q_details[1])
@@ -245,6 +258,9 @@ class Magi():
             except:
                 time.sleep(0.001)
                 pass
+        #saving for next time
+        self.queue_op_port = local_neo.client_connect_port
+        #print(local_neo.sock.getsockname())
         local_neo.send_data("get")
         data =  local_neo.receive_data()
         local_neo.close_conn()
