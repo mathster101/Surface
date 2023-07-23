@@ -16,6 +16,7 @@ DEBUG = False#True
 #4.Check if child procs get handled naturally
 #5.Think of some way to 'join' procs
 #6.Let magi change the neo buffer read size dynamically
+
 #spawn new bookkeeper
 def new_bookkeeper(free_port):
     new_bookkeeper = mp.Process(target=bookkeeper,args = (free_port,))
@@ -83,7 +84,7 @@ class Magi():
             return False
     
     #spawn the process locally and return its details
-    def spawn_local_process(self, path_to_file, args, fname):
+    def __spawn_local_process(self, path_to_file, args, fname):
         func_lib = importlib.import_module(path_to_file)
         func = getattr(func_lib, fname)
         proc = mp.Process(target=func,args=args)
@@ -117,7 +118,7 @@ class Magi():
                 with open(f"tmp_{self.new_proc_num}.py","w") as f:
                     f.write(function_text)
                 args = local_neo.receive_data()
-                proc = self.spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
+                proc = self.__spawn_local_process(f"tmp_{self.new_proc_num}", args, fname)
                 self.local_procs.append(proc)
                 os.remove(f"tmp_{self.new_proc_num}.py")#remove temp file
                 self.new_proc_num += 1
@@ -170,13 +171,13 @@ class Magi():
                             local_neo.send_data(PIDs)
                             local_neo.close_conn()
                             pass_ = True
-                            print(f"hearbeat sent to {IP} for PIDs:{PIDs}")
+                            print(f"heartbeat sent to {IP} for PIDs:{PIDs}")
                         except:
                             time.sleep(0.1)
                 print("*"*25)
                 
     #actually sends out message to start process
-    def process_internal(self,target,args = None, IP='192.168.1.11'):
+    def __process_internal(self,target,args = None, IP='192.168.1.11'):
         local_neo = Neo.Neo()
         print("going to spawn a new proc")
         local_neo.connect_client(PORT=6969,IP = IP)
@@ -195,8 +196,7 @@ class Magi():
         
     #wrapper to choose destination and spawn process
     def Process(self, target,args = None):
-        global master_init_procs
-        details = self.process_internal(target, args)
+        details = self.__process_internal(target, args)
         self.master_proc_init.put(details)
     
     #generate new queue object, return details(port num, ip addr)

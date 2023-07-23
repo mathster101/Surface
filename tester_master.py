@@ -23,7 +23,7 @@ def dummy2(magi_queue):
     import Magi
     import numpy as np
     magi = Magi.Magi()
-    arr = np.random.random((1000,100))
+    arr = np.random.random((500,100))
     for i in range(20000):
         #print(i)
         magi.queue_put(magi_queue, [f"{os.getpid()}:message from remote system {i}",arr])
@@ -34,7 +34,7 @@ def local_test1():
     magi = Magi.Magi()
     queue_deets = magi.queue()
     start = time.time()
-    data = np.random.random((3,10))
+    data = np.random.random((10,10))
     for i in range(iters):
         magi.queue_put(queue_deets, data)
     mid = time.time()
@@ -43,7 +43,7 @@ def local_test1():
     end = time.time()
     p1 = (mid-start)/iters
     p2 = (end - mid)/iters
-    print(f"put = {p1*1000}ms/conn get = {p2*1000}ms/conn\nfinished")        
+    print(f"put = {p1*1000}ms/conn\nget = {p2*1000}ms/conn\nfinished")        
 
 def master_test1():
     magi = Magi.Magi()
@@ -80,8 +80,24 @@ def master_test4():
         #continue
         if data != None:
             print(data[0])
-        #time.sleep(0.01)
-        
+
+def master_test5():
+    magi = Magi.Magi()
+    magi_queue1 = magi.queue()
+    magi_queue2 = magi.queue()
+    magi.register_network_thread(NETWORK_IP)
+    for i in range(2):
+        magi.Process(target = dummy2, args=(magi_queue1,))
+        magi.Process(target = dummy2, args=(magi_queue2,))
+    while 1:
+        data1 = magi.queue_get(magi_queue1)
+        data2 = magi.queue_get(magi_queue2)
+        #continue
+        if data1 != None:
+            print(data1[0])
+        if data2 != None:
+            print(data2[0])            
+
 if __name__ == '__main__':
     # magi = Magi.Magi()
     # queue_deets = magi.queue()
@@ -90,6 +106,6 @@ if __name__ == '__main__':
     # ports = []
     # for i in range(8):
     #     ports.append(magi.Queue())
-    local_test1()
-    #master_test4()
+    #local_test1()
+    master_test5()
     print("done")
