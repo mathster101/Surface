@@ -64,6 +64,9 @@ class Magi():
         self.heart_thread = mp.Process(target=self.heart,args=(self.master_proc_init,))
         self.heart_thread.start()
 
+    def __del__(self):
+        self.heart_thread.terminate()
+        print("sent terminate command")
 
     #tell magi about a network system
     def register_network_thread(self,IP_ADDR):
