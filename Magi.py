@@ -58,15 +58,15 @@ class Magi():
         self.bookkeepers = []
         self.local_procs = []
         self.network_threads = {'0.0.0.0': [os.cpu_count(), 0]}
-        local_neo = Neo.Neo()
-        self.my_ip = local_neo.get_my_ip()
+        self.my_ip = Neo.Neo().get_my_ip()
         self.master_proc_init = mp.Queue()
         self.heart_thread = mp.Process(target=self.heart,args=(self.master_proc_init,))
         self.heart_thread.start()
 
     def __del__(self):
         self.heart_thread.terminate()
-        print("sent terminate command")
+        for bk in self.bookkeepers:
+            bk.terminate()
 
     #tell magi about a network system
     def register_network_thread(self,IP_ADDR):
