@@ -86,13 +86,15 @@ def master_test5():
     magi_queue1 = magi.queue()
     magi_queue2 = magi.queue()
     magi.register_network_thread(NETWORK_IP)
+    #magi.register_network_thread('0.0.0.0')
     for i in range(2):
         magi.Process(target = dummy2, args=(magi_queue1,))
         magi.Process(target = dummy2, args=(magi_queue2,))
+    print(magi.network_threads)
     while 1:
         data1 = magi.queue_get(magi_queue1)
         data2 = magi.queue_get(magi_queue2)
-        #continue
+        continue
         if data1 != None:
             print(data1[0])
         if data2 != None:

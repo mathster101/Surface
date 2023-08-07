@@ -58,25 +58,33 @@ class Magi():
         self.new_proc_num = 0
         self.bookkeepers = []
         self.local_procs = []
-        self.network_threads = {'0.0.0.0': [os.cpu_count(), 0]}
+        self.network_threads = {}
         self.my_ip = Neo.Neo().get_my_ip()
         self.master_proc_init = mp.Queue()
         self.heart_thread = mp.Process(target=self.heart,args=(self.master_proc_init,))
         self.heart_thread.start()
 
     def __del__(self):
-        self.heart_thread.terminate()
+        try:
+            self.heart_thread.terminate()
+        except:
+            pass
         for bk in self.bookkeepers:
-            bk.terminate()
+            try:
+                bk.terminate()
+            except:
+                pass
 
     #tell magi about a network system
     def register_network_thread(self,IP_ADDR):
+        if IP_ADDR == '0.0.0.0' or IP_ADDR == '127.0.0.1':
+            self.network_threads[IP_ADDR] = [os.cpu_count(), 0]            
         try:
             local_neo = Neo.Neo()
             local_neo.connect_client(PORT=6969,IP = IP_ADDR)
             local_neo.send_data('registration')
             num_cores = local_neo.receive_data()
-            self.network_threads[IP_ADDR] = [num_cores, 0]
+            self.network_threads[IP_ADDR] = [num_cores, 0]#num cores, num procs
             local_neo.close_conn()
             return True
         except:
@@ -106,7 +114,7 @@ class Magi():
             #return number of cores to registering entity
             if order == 'registration':
                 cores = os.cpu_count()
-                local_neo.send_data([cores, 0])
+                local_neo.send_data(cores)
                 local_neo.close_conn()
                 print("registration over")
             
@@ -196,7 +204,17 @@ class Magi():
         
     #wrapper to choose destination and spawn process
     def Process(self, target,args = None):
-        details = self.__process_internal(target, args)
+        min_load = float('inf')
+        proc_target = None
+        for target_machine in self.network_threads:
+            print(self.network_threads[target_machine])
+            cores = self.network_threads[target_machine][0]
+            procs = self.network_threads[target_machine][1]
+            load = procs/cores
+            if load < min_load:
+                proc_target = target_machine
+        self.network_threads[proc_target][1] += 1
+        details = self.__process_internal(target, args,IP=proc_target)
         self.master_proc_init.put(details)
     
     #generate new queue object, return details(port num, ip addr)
