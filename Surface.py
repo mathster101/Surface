@@ -15,7 +15,7 @@ DEBUG = False#True
 #3.Investigate fixed ports per Neo instance✔️
 #4.Check if child procs get handled naturally
 #5.Think of some way to 'join' procs
-#6.Let magi change the neo buffer read size dynamically
+#6.Let Surface change the neo buffer read size dynamically
 
 #spawn new bookkeeper
 def new_bookkeeper(free_port):
@@ -51,7 +51,7 @@ def bookkeeper(port):
         local_neo.close_conn()
 
 
-class Magi():
+class Surface():
     
     def __init__(self):
         self.free_port = 12345
@@ -75,8 +75,10 @@ class Magi():
             except:
                 pass
 
-    #tell magi about a network system
+    #tell Surface about a network system
     def register_network_thread(self,IP_ADDR):
+        if IP_ADDR in self.network_threads:
+            return
         if IP_ADDR == '0.0.0.0' or IP_ADDR == '127.0.0.1':
             self.network_threads[IP_ADDR] = [os.cpu_count(), 0]            
         try:
@@ -103,7 +105,7 @@ class Magi():
     def listen_for_orders(self):
         local_neo = Neo.Neo()
         local_neo.start_server(PORT=6969)
-        print("Magi slave online")
+        print("Surface slave online")
         while 1:
             #if no connection received in the timeslot
             #go and check existing connections for any timeouts
@@ -299,4 +301,4 @@ def get_obj_size(obj):
     return sz
 
 if __name__ == "__main__":
-    m = Magi()
+    m = Surface()

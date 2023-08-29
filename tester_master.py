@@ -1,4 +1,4 @@
-import Magi
+import Surface
 import multiprocessing as mp
 import time
 import numpy as np
@@ -17,97 +17,97 @@ def dummy(text = "None"):
             index += 1
             time.sleep(1)
 
-def dummy2(magi_queue):
+def dummy2(surface_queue):
     import os
     import time
-    import Magi
+    import Surface
     import numpy as np
-    magi = Magi.Magi()
-    arr = np.random.random((500,100))
+    surface = Surface.Surface()
+    arr = np.random.random((100,100))
     for i in range(20000):
         #print(i)
-        magi.queue_put(magi_queue, [f"{os.getpid()}:message from remote system {i}",arr])
+        surface.queue_put(surface_queue, [f"{os.getpid()}:message from remote system {i}",arr])
         #time.sleep(0.1)
 
 def local_test1():
     iters = 1000
-    magi = Magi.Magi()
-    queue_deets = magi.queue()
+    surface = Surface.Surface()
+    queue_deets = surface.queue()
     start = time.time()
     data = np.random.random((10,10))
     for i in range(iters):
-        magi.queue_put(queue_deets, data)
+        surface.queue_put(queue_deets, data)
     mid = time.time()
     for i in range(iters):
-        rcvd = magi.queue_get(queue_deets)
+        rcvd = surface.queue_get(queue_deets)
     end = time.time()
     p1 = (mid-start)/iters
     p2 = (end - mid)/iters
     print(f"put = {p1*1000}ms/conn\nget = {p2*1000}ms/conn\nfinished")        
 
 def master_test1():
-    magi = Magi.Magi()
-    magi.register_network_thread(NETWORK_IP)
-    magi.register_network_thread(NETWORK_IP)
-    magi.register_network_thread(NETWORK_IP)
-    print(magi.network_threads) 
+    surface = Surface.Surface()
+    surface.register_network_thread(NETWORK_IP)
+    surface.register_network_thread(NETWORK_IP)
+    surface.register_network_thread(NETWORK_IP)
+    print(surface.network_threads) 
 
 def master_test2():
-    magi = Magi.Magi()
-    magi.register_network_thread(NETWORK_IP)    
-    magi.process(target = dummy, args = ("hey there!"))
+    surface = Surface.Surface()
+    surface.register_network_thread(NETWORK_IP)    
+    surface.process(target = dummy, args = ("hey there!"))
 
 def master_test3():
-    magi = Magi.Magi()
-    magi_queue = magi.queue()
-    magi.register_network_thread(NETWORK_IP)   
-    magi.Process(target = dummy2, args=(magi_queue,))
+    surface = Surface.Surface()
+    surface_queue = surface.queue()
+    surface.register_network_thread(NETWORK_IP)   
+    surface.Process(target = dummy2, args=(surface_queue,))
     while 1:
-        data = magi.queue_get(magi_queue)
+        data = surface.queue_get(surface_queue)
         if data != None:
             #continue
             print(data[0])
         #time.sleep(0.001)
 
 def master_test4():
-    magi = Magi.Magi()
-    magi_queue = magi.queue()
-    magi.register_network_thread(NETWORK_IP)
+    surface = Surface.Surface()
+    surface_queue = surface.queue()
+    surface.register_network_thread(NETWORK_IP)
     for i in range(6):
-        magi.Process(target = dummy2, args=(magi_queue,))
+        surface.Process(target = dummy2, args=(surface_queue,))
     while 1:
-        data = magi.queue_get(magi_queue)
+        data = surface.queue_get(surface_queue)
         #continue
         if data != None:
             print(data[0])
 
 def master_test5():
-    magi = Magi.Magi()
-    magi_queue1 = magi.queue()
-    magi_queue2 = magi.queue()
-    magi.register_network_thread(NETWORK_IP)
-    #magi.register_network_thread('0.0.0.0')
+    surface = Surface.Surface()
+    surface_queue1 = surface.queue()
+    surface_queue2 = surface.queue()
+    surface.register_network_thread(NETWORK_IP)
+    #surface.register_network_thread('0.0.0.0')
     for i in range(2):
-        magi.Process(target = dummy2, args=(magi_queue1,))
-        magi.Process(target = dummy2, args=(magi_queue2,))
-    print(magi.network_threads)
+        surface.Process(target = dummy2, args=(surface_queue1,))
+        surface.Process(target = dummy2, args=(surface_queue2,))
+    print(surface.network_threads)
     while 1:
-        data1 = magi.queue_get(magi_queue1)
-        data2 = magi.queue_get(magi_queue2)
-        continue
+        data1 = surface.queue_get(surface_queue1)
+        data2 = surface.queue_get(surface_queue2)
+        #continue
         if data1 != None:
             print(data1[0])
         if data2 != None:
             print(data2[0])            
 
 if __name__ == '__main__':
-    # magi = Magi.Magi()
-    # queue_deets = magi.queue()
+    # surface = Surface.Surface()
+    # queue_deets = surface.queue()
     # test1(queue_deets)
-    # magi.kill_queues()
+    # surface.kill_queues()
     # ports = []
     # for i in range(8):
-    #     ports.append(magi.Queue())
-    #local_test1()
-    master_test5()
+    #     ports.append(surface.Queue())
+    local_test1()
+    #master_test5()
     print("done")
