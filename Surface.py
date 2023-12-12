@@ -53,13 +53,13 @@ def bookkeeper(port):
 
 class Surface():
     
-    def __init__(self, local_ip):
+    def __init__(self):
         self.free_port = 12345
         self.new_proc_num = 0
         self.bookkeepers = []
         self.local_procs = []
         self.network_threads = {}
-        self.my_ip = local_ip
+        self.my_ip = None
         self.master_proc_init = mp.Queue()
         self.heart_thread = mp.Process(target=self.heart,args=(self.master_proc_init,))
         self.heart_thread.start()
@@ -75,6 +75,10 @@ class Surface():
             except:
                 pass
 
+    #tell surface your local ip address
+    def register_local_master(self,my_ip):
+        self.my_ip = my_ip
+    
     #tell Surface about a network system
     def register_network_thread(self,IP_ADDR):
         if IP_ADDR in self.network_threads:

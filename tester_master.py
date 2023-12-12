@@ -24,14 +24,26 @@ def dummy2(surface_queue):
     import numpy as np
     surface = Surface.Surface()
     arr = np.random.random((100,100))
-    for i in range(20000):
+    for i in range(200000):
         #print(i)
         surface.queue_put(surface_queue, [f"{os.getpid()}:message from remote system {i}",arr])
         #time.sleep(0.1)
 
+def dummy3():
+    import os
+    import time
+    import Surface
+    import numpy as np
+    surface = Surface.Surface()
+    while 1:
+        data = surface.queue_get(surface_queue)
+        print(data)
+    return
+
 def local_test1():
     iters = 1000
-    surface = Surface.Surface('100.87.169.65')
+    surface = Surface.Surface()
+    surface.register_local_master('100.87.169.65')
     queue_deets = surface.queue()
     start = time.time()
     data = np.random.random((10,10))
@@ -100,6 +112,17 @@ def master_test5():
         if data2 != None:
             print(data2[0])            
 
+def master_test6():
+    surface = Surface.Surface()
+    surface_queue = surface.queue()
+    surface.register_network_thread(NETWORK_IP)
+    surface.register_network_thread(NETWORK_IP2)
+    for i in range(1):
+        surface.Process(target = dummy2, args=(surface_queue,))
+        surface.Process(target = dummy3)
+    while 1:
+        print("this is the master node")
+        time.sleep(2)    
 if __name__ == '__main__':
     # surface = Surface.Surface()
     # queue_deets = surface.queue()
