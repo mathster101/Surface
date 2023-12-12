@@ -210,6 +210,7 @@ class Surface():
         
     #wrapper to choose destination and spawn process
     def Process(self, target,args = None):
+        print("proc spawn called !!!!!")
         min_load = float('inf')
         proc_target = None
         for target_machine in self.network_threads:
@@ -217,8 +218,11 @@ class Surface():
             cores = self.network_threads[target_machine][0]
             procs = self.network_threads[target_machine][1]
             load = procs/cores
+            print(load)
             if load < min_load:
                 proc_target = target_machine
+                min_load = load
+        print(proc_target, "chosen")
         self.network_threads[proc_target][1] += 1
         details = self.__process_internal(target, args,IP=proc_target)
         self.master_proc_init.put(details)
