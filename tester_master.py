@@ -31,7 +31,7 @@ def dummy2(surface_queue):
 
 def local_test1():
     iters = 1000
-    surface = Surface.Surface()
+    surface = Surface.Surface('100.87.169.65')
     queue_deets = surface.queue()
     start = time.time()
     data = np.random.random((10,10))
@@ -58,7 +58,7 @@ def master_test2():
     surface.process(target = dummy, args = ("hey there!"))
 
 def master_test3():
-    surface = Surface.Surface()
+    surface = Surface.Surface('100.87.169.65')
     surface_queue = surface.queue()
     surface.register_network_thread(NETWORK_IP)   
     surface.Process(target = dummy2, args=(surface_queue,))

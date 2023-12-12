@@ -53,13 +53,13 @@ def bookkeeper(port):
 
 class Surface():
     
-    def __init__(self):
+    def __init__(self, local_ip):
         self.free_port = 12345
         self.new_proc_num = 0
         self.bookkeepers = []
         self.local_procs = []
         self.network_threads = {}
-        self.my_ip = Neo.Neo().get_my_ip()
+        self.my_ip = local_ip
         self.master_proc_init = mp.Queue()
         self.heart_thread = mp.Process(target=self.heart,args=(self.master_proc_init,))
         self.heart_thread.start()
