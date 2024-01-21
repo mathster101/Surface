@@ -5,8 +5,11 @@ import multiprocessing as mp
 
 def main():
     surf = Surface.Surface()
-    s,r = mp.Queue(), mp.Queue()
+    man = mp.Manager()
+    s,r = man.Queue(), man.Queue()
     surf.main2dmaster.put([s,r])
+    while True:
+        pass
 
 
 
