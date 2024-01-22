@@ -3,7 +3,7 @@ import multiprocessing as mp
 import time
 
 
-def main():
+def test1():
     surf = Surface.Surface()
     man = mp.Manager()
     s,r = man.Queue(), man.Queue()
@@ -14,9 +14,16 @@ def main():
     s.put([["PUT",70],1234])
     s.put([["PUT",71],1234])
     s.put([["PUT",72],1234])
-    s.put([["PUT",72],1235])
+    s.put([["PUT",99],1235])
+    s.put(["GET",1234])
     a.put([["PUT",100],1235])
-    time.sleep(4)#make this bigger if needed
+    time.sleep(2)#make this bigger if needed
 
 
-main()
+def test2():
+    surf = Surface.Surface()
+    surf.Process()
+
+
+
+test2()
