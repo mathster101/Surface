@@ -35,14 +35,14 @@ class Surface:
             time.sleep(0.0001)#remove later!
             #check if main has sent new queues
             while self.main2dmaster.empty() == False:
-                new_queues = self.main2dmaster.get(block=True,timeout = 1)
+                new_queues = self.main2dmaster.get()
                 proc_queues.append(new_queues)
             #service one request from each process
             for incoming,outgoing in proc_queues:
                 if incoming.empty():
                     continue
                 orderrcvd = incoming.get()
-                print(orderrcvd)
+                print(f"order at dmaster {orderrcvd}")
                 command, netqueueId = orderrcvd                
                 if netqueueId not in self.netqdata:
                     self.netqdata[netqueueId] = []
@@ -60,29 +60,33 @@ class Surface:
                 
 
     def Process(self):
-        queues = [self.man.Queue(), self.man.Queue()]
-        newAgent = mp.Process(target=self.Agent, args = (self.agentPort, queues,))
+        a = self.man.Queue()
+        b = self.man.Queue()
+        self.main2dmaster.put([a,b])
+        newAgent = mp.Process(target=self.Agent, args = (self.agentPort, [a, b]))
         self.agentPort += 1
-        newAgent.start()
         self.agents.append(newAgent)
+        self.agents[-1].start()
 
     def Agent(self, port, queues):
         print(f"Agent online at port {port}")
-        send, recv = queues[0], queues[1]
+        send, recv = queues
         local_neo = Neo.Neo()    
-        local_neo.start_server(PORT = port)
+        local_neo.start_server(PORT=port)
         local_neo.get_new_conn()
         while True:
-            command = local_neo.receive_data()
-            print(command)
+            orderrcvd = local_neo.receive_data()
+            print(f"order at agent {orderrcvd}")
+            command, _ = orderrcvd
             if command == "GET":
-                send.put(command)
+                send.put(orderrcvd)
                 while recv.empty():
                     pass
                 sendback = recv.get()
                 local_neo.send_data(sendback)
-            elif command == "PUT":
-                send.put(command)
+            elif command[0] == "PUT":
+                send.put(orderrcvd)
+                
 
 
 if __name__ == "__main__":
