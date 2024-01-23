@@ -1,6 +1,7 @@
 import multiprocessing as mp
 import time
 import Neo
+import numpy as np
 #new surface needs to create
 #1. Datamaster - store all shared variables
 #2. Queue to send other queue deets from main 
@@ -20,7 +21,6 @@ class Surface:
         self.agentPort = 30303
         self.agents = []
         ###########################
-        
 
     def __del__(self):
         self.dmaster.kill()
@@ -32,7 +32,7 @@ class Surface:
         print("Datamaster is online")
         proc_queues = []
         while True:
-            time.sleep(0.0001)#remove later!
+            #time.sleep(0.0001)#remove later!
             #check if main has sent new queues
             while self.main2dmaster.empty() == False:
                 new_queues = self.main2dmaster.get()
@@ -42,7 +42,7 @@ class Surface:
                 if incoming.empty():
                     continue
                 orderrcvd = incoming.get()
-                print(f"order at dmaster {orderrcvd}")
+                #print(f"order at dmaster {orderrcvd}")
                 command, netqueueId = orderrcvd                
                 if netqueueId not in self.netqdata:
                     self.netqdata[netqueueId] = []
@@ -63,8 +63,8 @@ class Surface:
         a = self.man.Queue()
         b = self.man.Queue()
         self.main2dmaster.put([a,b])
-        newAgent = mp.Process(target=self.Agent, args = (self.agentPort, [a, b]))
         self.agentPort += 1
+        newAgent = mp.Process(target=self.Agent, args = (self.agentPort-1, [a, b]))
         self.agents.append(newAgent)
         self.agents[-1].start()
 
@@ -76,7 +76,7 @@ class Surface:
         local_neo.get_new_conn()
         while True:
             orderrcvd = local_neo.receive_data()
-            print(f"order at agent {orderrcvd}")
+            #print(f"order at agent {orderrcvd}")
             command, _ = orderrcvd
             if command == "GET":
                 send.put(orderrcvd)
