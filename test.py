@@ -48,7 +48,7 @@ def test3():
     surf = Surface.Surface()
     surf.Process()
     surf.Process()
-    
+
     def connect2agent():
         neo = Neo.Neo()
         neo.connect_client(PORT=30303, IP=MASTER_IP)
@@ -126,4 +126,4 @@ def test3_2():
     blemm.join()    
 
 # test3()
-test3_1()
+test3()
