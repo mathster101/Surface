@@ -7,7 +7,7 @@ import os
 #1. Datamaster - store all shared variables
 #2. Queue to send other queue deets from main 
 
-class Surface:
+class Surface_master:
     def __init__(self):
         ###########################
         ##set up for dmaster
@@ -23,7 +23,6 @@ class Surface:
         self.agents = []
         ###misc stuff###################
         self.netClients = {}
-        self.totalProcCount = 0
 
     def __del__(self):
         self.dmaster.kill()
@@ -86,10 +85,35 @@ class Surface:
             elif command[0] == "PUT":
                 send.put(orderrcvd)
 
-    def listenForOrders():
+    def registerMaster(self,masterIP):
+        self.masterIP = masterIP
+
+    def registerClient(self, IP_ADDR, PORT=6969):
+        if IP_ADDR in self.netClients:
+            return True
+        try:
+            neo = Neo.Neo()
+            neo.connect_client(PORT=PORT,IP = IP_ADDR)
+            neo.send_data('registration')
+            num_cores = neo.receive_data()
+            self.network_threads[IP_ADDR] = [num_cores, 0]#num cores, num procs
+            neo.close_conn()
+            return True
+        except:
+            print(f"{IP_ADDR} is offline")
+            return False            
+
+
+class Surface_slave:
+    def __init__(self):
+        self.procsRcvd = 0
+        self.listenPort = -1
+    
+    def startListener(self, PORT = 6969):
         neo = Neo.Neo()
-        neo.start_server(PORT=6969)
-        print("Surface client online")
+        neo.start_server(PORT=PORT)
+        print("Surface slave online")
+        self.listenPort = PORT
         while True:
             #handle heartbeat timers if no orders
             if neo.get_new_conn(timeout = True) == "Timeout":
@@ -106,26 +130,7 @@ class Surface:
             #receive function body and args and
             #spawn a new process
             elif order == 'spawn_process':
-                pass
-         
-    def registerMaster(self,masterIP):
-        self.masterIP = masterIP
-
-    def registerClient(self, IP_ADDR, PORT=6969):
-        if IP_ADDR in self.netClients:
-            return True
-        try:
-            neo = Neo.Neo()
-            neo.connect_client(PORT=6969,IP = IP_ADDR)
-            neo.send_data('registration')
-            num_cores = neo.receive_data()
-            self.network_threads[IP_ADDR] = [num_cores, 0]#num cores, num procs
-            neo.close_conn()
-            return True
-        except:
-            print(f"{IP_ADDR} is offline")
-            return False            
-
+                pass        
 
 if __name__ == "__main__":
     pass

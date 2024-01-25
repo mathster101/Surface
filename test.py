@@ -3,15 +3,11 @@ import multiprocessing as mp
 import time
 import Neo
 
-
-
 MASTER_IP = '127.0.0.1'
 
 
-
-
 def test1():
-    surf = Surface.Surface()
+    surf = Surface.Surface_master()
     man = mp.Manager()
     s,r = man.Queue(), man.Queue()
     a,b = man.Queue(), man.Queue()
@@ -28,7 +24,7 @@ def test1():
 
 
 def test2():
-    surf = Surface.Surface()
+    surf = Surface.Surface_master()
     surf.Process()
     def connect2agent():
         time.sleep(0.3)
@@ -45,7 +41,7 @@ def test2():
     mlemm.join()
 
 def test3():
-    surf = Surface.Surface()
+    surf = Surface.Surface_master()
     surf.Process()
     surf.Process()
 
@@ -72,39 +68,17 @@ def test3():
     mlemm.join()
     blemm.join()    
 
-def test3_1():
-    surf = Surface.Surface()
+def test4_1():
+    surf = Surface.Surface_master()
     surf.Process()
     surf.Process()
     while True:
         pass
-    # def connect2agent():
-    #     neo = Neo.Neo()
-    #     neo.connect_client(PORT=30303, IP=MASTER_IP)
-    #     while True:
-    #         neo.send_data([["PUT",69],1234])
-    #         neo.send_data(["GET",1234])
-    #         data = neo.receive_data()
-    #         print(f"got {data} from queue")
-    # def connect2agent2():
-    #     neo = Neo.Neo()
-    #     neo.connect_client(PORT=30304, IP=MASTER_IP)
-    #     while True:
-    #         neo.send_data([["PUT",101],1234])
-    #         neo.send_data(["GET",1234])
-    #         data = neo.receive_data()
-    #         print(f"got {data} from queue")    
-    # mlemm = mp.Process(target = connect2agent)
-    # blemm = mp.Process(target = connect2agent2)
-    # mlemm.start()
-    # blemm.start()
-    # mlemm.join()
-    # blemm.join()
 
-def test3_2():
+def test4_2():
     def connect2agent():
         neo = Neo.Neo()
-        neo.connect_client(PORT=30303, IP=MASTER_IP)
+        neo.connect_client(PORT=30303, IP=MASTER_IP)#queue agent 1
         while True:
             neo.send_data([["PUT",69],1234])
             neo.send_data(["GET",1234])
@@ -112,7 +86,7 @@ def test3_2():
             print(f"got {data} from queue")
     def connect2agent2():
         neo = Neo.Neo()
-        neo.connect_client(PORT=30304, IP=MASTER_IP)
+        neo.connect_client(PORT=30304, IP=MASTER_IP)#queue agent 2
         while True:
             neo.send_data([["PUT",101],1234])
             neo.send_data(["GET",1234])
