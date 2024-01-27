@@ -1,7 +1,6 @@
 import multiprocessing as mp
 import time
 import Neo
-import numpy as np
 import os
 import importlib
 import inspect

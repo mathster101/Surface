@@ -100,6 +100,12 @@ def test4_2():
     mlemm.join()
     blemm.join()    
 ################################################################
-    
+
+def test5():
+    def hello():
+        print("hello world")
+    surf = Surface.Surface()
+
+
 # test3()
 test4_1()
