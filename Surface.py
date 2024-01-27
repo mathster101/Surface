@@ -3,9 +3,9 @@ import time
 import Neo
 import numpy as np
 import os
-#new surface needs to create
-#1. Datamaster - store all shared variables
-#2. Queue to send other queue deets from main 
+import importlib
+import inspect
+
 
 class Surface_master:
     def __init__(self):
@@ -26,22 +26,25 @@ class Surface_master:
 
     def __del__(self):
         self.dmaster.kill()
+        for agent in self.agents:
+            agent.kill()
 
     def dataMaster(self):
         print("Datamaster is online")
         proc_queues = []
+        count = 0
         while True:
-            #time.sleep(0.0001)#remove later!
             #check if main has sent new queues
             while self.main2dmaster.empty() == False:
                 new_queues = self.main2dmaster.get()
                 proc_queues.append(new_queues)
+            puts = []
+            gets = []
             #service one request from each process
             for incoming,outgoing in proc_queues:
                 if incoming.empty():
                     continue
                 orderrcvd = incoming.get()
-                #print(f"order at dmaster {orderrcvd}")
                 command, netqueueId = orderrcvd                
                 if netqueueId not in self.netqdata:
                     self.netqdata[netqueueId] = []
@@ -50,28 +53,22 @@ class Surface_master:
                     if len(self.netqdata[netqueueId]) == 0:
                         retval = None
                     else:
-                        retval = self.netqdata[netqueueId].pop(0)                    
+                        retval = self.netqdata[netqueueId].pop(0)               
                     outgoing.put(retval)
+                    count += 1
                 elif command[0] == "PUT":
+                    #print(count, "put")
                     data = command[1]
                     self.netqdata[netqueueId].append(data)
-                #print(self.netqdata)
-                
-    def Process(self):
-        a = self.man.Queue()
-        b = self.man.Queue()
-        self.main2dmaster.put([a,b])
-        self.agentPort += 1
-        newAgent = mp.Process(target=self.Agent, args = (self.agentPort-1, [a, b]))
-        self.agents.append(newAgent)
-        self.agents[-1].start()
+                    #count += 1
 
     def Agent(self, port, queues):
-        print(f"Agent online at port {port}")
+        print(f"Agent online at port:{port}")
         send, recv = queues
         neo = Neo.Neo()    
         neo.start_server(PORT=port)
         neo.get_new_conn()
+        print(f"Remote process connected to port:{port}")
         while True:
             orderrcvd = neo.receive_data()
             #print(f"order at agent {orderrcvd}")
@@ -83,7 +80,30 @@ class Surface_master:
                 sendback = recv.get()
                 neo.send_data(sendback)
             elif command[0] == "PUT":
-                send.put(orderrcvd)
+                send.put(orderrcvd)    
+                
+    def Process(self, target = None, args = None):
+        a = self.man.Queue()
+        b = self.man.Queue()
+        self.main2dmaster.put([a,b])
+        self.agentPort += 1
+        newAgent = mp.Process(target=self.Agent, args = (self.agentPort-1, [a, b]))
+        self.agents.append(newAgent)
+        self.agents[-1].start()
+
+        if target != None:
+            min_load = float('inf')
+            proc_target = None
+            for targetClient in self.netClients:
+                cores = self.netClients[targetClient][0]
+                procs = self.netClients[targetClient][1]
+                load = procs/cores
+                if load < min_load:
+                    proc_target = targetClient
+                    min_load = load
+            print(proc_target, "chosen")
+            self.netClients[proc_target][1] += 1
+            details = self.__process_internal(target, args,IP=proc_target)
 
     def registerMaster(self,masterIP):
         self.masterIP = masterIP
@@ -96,18 +116,36 @@ class Surface_master:
             neo.connect_client(PORT=PORT,IP = IP_ADDR)
             neo.send_data('registration')
             num_cores = neo.receive_data()
-            self.network_threads[IP_ADDR] = [num_cores, 0]#num cores, num procs
+            self.netClients[IP_ADDR] = [num_cores, 0]#num cores, num procs
             neo.close_conn()
             return True
         except:
             print(f"{IP_ADDR} is offline")
             return False            
 
+    def __process_internal(self,target,args = None, IP='192.168.1.11'):
+        neo = Neo.Neo()
+        print("going to spawn a new proc")
+        neo.connect_client(PORT=6969,IP = IP)
+        neo.send_data("spawn_process")
+        src = inspect.getsource(target)
+        neo.send_data(str(target.__name__))
+        neo.send_data(src)
+        if str(type(args)) == "<class 'tuple'>":
+            pass
+        else:
+            args = (args,)
+        neo.send_data(args)
+        pid = neo.receive_data()
+        neo.close_conn()
+        return (IP,pid)
+    
 
 class Surface_slave:
     def __init__(self):
         self.procsRcvd = 0
         self.listenPort = -1
+        self.localProcs = []
     
     def startListener(self, PORT = 6969):
         neo = Neo.Neo()
@@ -130,7 +168,18 @@ class Surface_slave:
             #receive function body and args and
             #spawn a new process
             elif order == 'spawn_process':
-                pass        
+                functionName = neo.receive_data()
+                functionText = neo.receive_data()
+                with open(f"tmp_{self.procsRcvd}.py","w") as f:
+                    f.write(functionText)
+                args = neo.receive_data()
+                proc = self.__spawn_local_process(f"tmp_{self.procsRcvd}", args, fname)
+                self.local_procs.append(proc)
+                os.remove(f"tmp_{self.procsRcvd}.py")#remove temp file
+                self.procsRcvd += 1
+                neo.send_data(proc[0].pid)
+                print(f"spawn new process {functionName}->{args}")
+                neo.close_conn()                        
 
 if __name__ == "__main__":
     pass

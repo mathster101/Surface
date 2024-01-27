@@ -13,6 +13,7 @@ class Neo:
         self.i_am_a = None
         self.last_used_port = None
         self.__remnant = b''
+        self.buffer_size = 4096#2**16
 
     def __del__(self):
         try:
@@ -61,12 +62,12 @@ class Neo:
         end_char = bytes("msg-end", encoding = 'utf-8')
         if self.i_am_a == "server" and end_char not in self.__remnant:
             while 1:
-                received += self.conn.recv(2**16)
+                received += self.conn.recv(self.buffer_size)
                 if end_char in received:
                     break
         elif self.i_am_a =="client"  and end_char not in self.__remnant:
             while 1:    
-                received += self.sock.recv(2**16)
+                received += self.sock.recv(self.buffer_size)
                 if end_char in received:
                     break
         terminate_at = received.find(end_char)

@@ -68,6 +68,7 @@ def test3():
     mlemm.join()
     blemm.join()    
 
+################################################################
 def test4_1():
     surf = Surface.Surface_master()
     surf.Process()
@@ -98,6 +99,7 @@ def test4_2():
     blemm.start()
     mlemm.join()
     blemm.join()    
-
+################################################################
+    
 # test3()
-test3()
+test4_1()
