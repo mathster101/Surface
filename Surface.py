@@ -158,6 +158,7 @@ class Surface_slave:
                 order = "handle_proc_timers"
             else:    
                 order = neo.receive_data()   
+
             #return number of cores to registering entity
             if order == 'registration':
                 cores = os.cpu_count()
@@ -173,13 +174,22 @@ class Surface_slave:
                 with open(f"tmp_{self.procsRcvd}.py","w") as f:
                     f.write(functionText)
                 args = neo.receive_data()
-                proc = self.__spawn_local_process(f"tmp_{self.procsRcvd}", args, fname)
+                proc = self.__spawn_local_process(f"tmp_{self.procsRcvd}", args, functionName)
                 self.local_procs.append(proc)
-                os.remove(f"tmp_{self.procsRcvd}.py")#remove temp file
-                self.procsRcvd += 1
-                neo.send_data(proc[0].pid)
+                # os.remove(f"tmp_{self.procsRcvd}.py")#remove temp file
+                # self.procsRcvd += 1
+                # neo.send_data(proc[0].pid)
                 print(f"spawn new process {functionName}->{args}")
                 neo.close_conn()                        
+
+    #spawn the process locally and return its details
+    def __spawn_local_process(self, path_to_file, args, functionName):
+        func_lib = importlib.import_module(path_to_file)
+        func = getattr(func_lib, functionName)
+        proc = mp.Process(target=func, args=args)
+        proc.start()
+        return [proc, time.time()]
+    
 
 if __name__ == "__main__":
     pass
