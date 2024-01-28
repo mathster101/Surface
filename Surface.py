@@ -163,7 +163,7 @@ class Surface_slave:
                 cores = os.cpu_count()
                 neo.send_data(cores)
                 neo.close_conn()
-                print("registration over")
+                print(f"Registration request : {neo.addr}")
             
             #receive function body and args and
             #spawn a new process
@@ -174,7 +174,7 @@ class Surface_slave:
                     f.write(functionText)
                 args = neo.receive_data()
                 proc = self.__spawn_local_process(f"tmp_{self.procsRcvd}", args, functionName)
-                self.local_procs.append(proc)
+                self.localProcs.append(proc)
                 # os.remove(f"tmp_{self.procsRcvd}.py")#remove temp file
                 # self.procsRcvd += 1
                 # neo.send_data(proc[0].pid)
@@ -185,7 +185,7 @@ class Surface_slave:
     def __spawn_local_process(self, path_to_file, args, functionName):
         func_lib = importlib.import_module(path_to_file)
         func = getattr(func_lib, functionName)
-        proc = mp.Process(target=func, args=args)
+        proc = mp.Process(target=func)#, args=args)
         proc.start()
         return [proc, time.time()]
     

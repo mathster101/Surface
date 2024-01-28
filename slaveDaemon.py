@@ -9,7 +9,8 @@ while True:
     try:
         surfSlave = Surface.Surface_slave()
         surfSlave.startListener(PORT=PORT)
-    except:
+    except Exception as e:
+        print(f"ERROR:{e}")
         for filename in glob.glob("./tmp_"):
             os.remove(filename)
-        subprocess.run(f"sudo fuser -k -n tcp {PORT}")
+        subprocess.run(f"sudo fuser -k -n tcp {PORT}", shell = True)

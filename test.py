@@ -100,12 +100,15 @@ def test4_2():
     mlemm.join()
     blemm.join()    
 ################################################################
+def hello():
+    print("hello world")
 
 def test5():
-    def hello():
-        print("hello world")
-    surf = Surface.Surface()
-
+    surf = Surface.Surface_master()
+    surf.registerMaster('100.87.169.65')
+    surf.registerClient('100.116.71.60')
+    surf.Process(target=hello)
+    print(surf.netClients)
 
 # test3()
-test4_1()
+test5()
