@@ -68,7 +68,7 @@ class Surface_master:
         neo = Neo.Neo()    
         neo.start_server(PORT=port)
         neo.get_new_conn()
-        print(f"Remote process connected to port:{port}")
+        print(f"Remote process connected to port: {port}")
         while True:
             orderrcvd = neo.receive_data()
             #print(f"order at agent {orderrcvd}")
@@ -169,7 +169,7 @@ class Surface_slave:
                 cores = os.cpu_count()
                 neo.send_data(cores)
                 neo.close_conn()
-                print(f"Registration request : {neo.addr}")
+                print(f"Registration request")
             
             #receive function body and args and
             #spawn a new process
@@ -203,11 +203,12 @@ def generateSlaveQCode(IP, PORT):
         self.IP = "{IP}"
         self.port = {PORT}
         self.neo = Neo.Neo()
+        self.neo.connect_client(PORT=self.port, IP=self.IP)
     
-    def queuePut(data, queueId):
+    def queuePut(self, data, queueId):
         self.neo.send_data([["PUT", data], queueId])    
     
-    def queueGet(queueId):
+    def queueGet(self, queueId):
         self.neo.send_data(["GET", queueId])
         data = self.neo.receive_data()
         return data\n#####################\n"""

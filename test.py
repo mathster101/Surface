@@ -121,5 +121,25 @@ def test6():
     surf.registerClient('192.168.0.40')   
     surf.Process(target=badFibonacci, args = (10)) 
 ################################################################    
+def test7():
+    def hello():
+        from time import sleep
+        queue = queueConnect()
+        counter = 0
+        while True:
+            queue.queuePut(f"hello-{counter}", 1234)
+            data = queue.queueGet(1234)
+            print(data)
+            sleep(0.5)
+            counter += 1
+            if counter > 100:
+                return
+    surf = Surface.Surface_master()
+    surf.registerMaster('192.168.0.23')
+    surf.registerClient('192.168.0.40')   
+    surf.Process(target=hello)
+    while True:
+        pass
+################################################################  
 # test3()
-test6()
+test7()
