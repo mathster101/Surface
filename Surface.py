@@ -71,7 +71,6 @@ class Surface_master:
         print(f"Remote process connected to port: {port}")
         while True:
             orderrcvd = neo.receive_data()
-            #print(f"order at agent {orderrcvd}")
             command, _ = orderrcvd
             if command == "GET":
                 send.put(orderrcvd)
@@ -143,7 +142,6 @@ class Surface_master:
             print(f"{IP_ADDR} is offline")
             return False            
 
-    
 ################################################################  
     
 class Surface_slave:
@@ -196,7 +194,9 @@ class Surface_slave:
             proc = mp.Process(target=func, args=args)
         proc.start()
         return [proc, time.time()]
-    
+
+################################################################  
+
 def generateSlaveQCode(IP, PORT):
     text = f"""class queueConnect:
     def __init__(self):

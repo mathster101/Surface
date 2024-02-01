@@ -130,14 +130,12 @@ def test7():
             queue.queuePut(f"hello-{counter}", 1234)
             data = queue.queueGet(1234)
             print(data)
-            sleep(0.5)
             counter += 1
-            if counter > 100:
-                return
     surf = Surface.Surface_master()
     surf.registerMaster('192.168.0.23')
     surf.registerClient('192.168.0.40')   
-    surf.Process(target=hello)
+    for i in range(10):
+        surf.Process(target=hello)
     while True:
         pass
 ################################################################  
