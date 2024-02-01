@@ -100,15 +100,26 @@ def test4_2():
     mlemm.join()
     blemm.join()    
 ################################################################
-def hello():
-    print("hello world")
-
 def test5():
+    def hello(kappa):
+        print(f"hello world {kappa}")
     surf = Surface.Surface_master()
-    surf.registerMaster('100.87.169.65')
-    surf.registerClient('100.116.71.60')
-    surf.Process(target=hello)
+    surf.registerMaster('192.168.0.23')
+    surf.registerClient('192.168.0.40')
+    surf.Process(target=hello, args = ("mathew"))
     print(surf.netClients)
-
+################################################################
+def test6():
+    def badFibonacci(x):
+        if x <= 1:
+            return 1
+        localSoln = badFibonacci(x-1) + badFibonacci(x-2)
+        print(localSoln)
+        return localSoln
+    surf = Surface.Surface_master()
+    surf.registerMaster('192.168.0.23')
+    surf.registerClient('192.168.0.40')   
+    surf.Process(target=badFibonacci, args = (10)) 
+################################################################    
 # test3()
-test5()
+test6()
