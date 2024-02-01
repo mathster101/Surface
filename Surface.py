@@ -23,6 +23,9 @@ class Surface_master:
         ###misc stuff###################
         self.netClients = {}
         self.netProcs = []
+        self.process2heart = self.man.Queue()
+        self.heartProc = mp.Process(target = self.heart)
+        self.heartProc.start()
 
     def __del__(self):
         self.dmaster.kill()
@@ -30,7 +33,7 @@ class Surface_master:
             agent.kill()
 
     def dataMaster(self):
-        print("Datamaster is online")
+        print("DATAMASTER -> ONLINE")
         proc_queues = []
         count = 0
         while True:
@@ -63,7 +66,7 @@ class Surface_master:
                     #count += 1
 
     def Agent(self, port, queues):
-        print(f"Agent online at port: {port}")
+        print(f"AGENT -> ONLINE PORT:{port}")
         send, recv = queues
         neo = Neo.Neo()    
         neo.start_server(PORT=port)
@@ -91,6 +94,10 @@ class Surface_master:
         self.agents.append(newAgent)
         self.agents[-1].start()
 
+        if len(self.netClients) == 0:
+            print("[ERROR]: NO SLAVES REGISTERED")
+            return -1
+        
         if target != None:
             min_load = float('inf')
             proc_target = None
@@ -101,10 +108,11 @@ class Surface_master:
                 if load < min_load:
                     proc_target = targetClient
                     min_load = load
-            print(proc_target, "chosen")
+            #print(proc_target, "chosen")
             self.netClients[proc_target][1] += 1
             details = self.__process_internal(target, args, IP=proc_target, agentPort = agentPort)
             self.netProcs.append(details)#store IP and PID on slave
+            self.process2heart.put(details)
 
     def __process_internal(self, target, args = None, IP = None, agentPort = None):
         neo = Neo.Neo()
@@ -120,9 +128,9 @@ class Surface_master:
         else:
             args = (args,)
         neo.send_data(args)
-        pid = neo.receive_data()#PID on slave
+        PID = neo.receive_data()#PID on slave
         neo.close_conn()
-        return (IP,pid)
+        return (IP,PID)
 
     def registerMaster(self,masterIP):
         self.masterIP = masterIP
@@ -141,6 +149,28 @@ class Surface_master:
         except:
             print(f"{IP_ADDR} is offline")
             return False            
+
+    def heart(self):
+        processes = []
+        IP2PIDmap = {}
+        neo = Neo.Neo()
+        print("HEART -> ONLINE")
+        while True:
+            while not self.process2heart.empty():
+                proc = self.process2heart.get()
+                processes.append(proc)
+            for proc in processes:
+                IP, PID = proc
+                if IP not in IP2PIDmap:
+                    IP2PIDmap[IP] = []
+                if PID not in IP2PIDmap[IP]:
+                    IP2PIDmap[IP].append(PID)
+            for IP in IP2PIDmap:#send PIDs to correct slave IPs
+                neo.connect_client(PORT=6969,IP = IP)
+                neo.send_data("heartbeat")
+                neo.send_data(IP2PIDmap[IP])
+                neo.close_conn()
+            time.sleep(0.5)
 
 ################################################################  
     
@@ -167,7 +197,7 @@ class Surface_slave:
                 cores = os.cpu_count()
                 neo.send_data(cores)
                 neo.close_conn()
-                print(f"Registration request")
+                print(f"[Order]: Registration request")
             
             #receive function body and args and
             #spawn a new process
@@ -179,10 +209,32 @@ class Surface_slave:
                 args = neo.receive_data()
                 proc = self.__spawn_local_process(f"tmp_{self.procsRcvd}", args, functionName)
                 self.localProcs.append(proc)
-                #os.remove(f"tmp_{self.procsRcvd}.py")#remove temp file
+                os.remove(f"tmp_{self.procsRcvd}.py")#remove temp file
                 self.procsRcvd += 1
                 neo.send_data(proc[0].pid)
-                neo.close_conn()                        
+                neo.close_conn()                 
+                print(f"[Order]: Function spawn --> {functionName}")       
+
+            #receive heartbeat and PIDs to keep alive
+            elif order == "heartbeat":
+                now = time.time()
+                rcvdPIDs = neo.receive_data()
+                print(f"[heartbeat]: {rcvdPIDs} : {now}")
+                for proc in self.localProcs:
+                    PID = proc[0].pid
+                    time_ = proc[1]
+                    if PID in rcvdPIDs:
+                        proc[1] = now
+                neo.close_conn()
+            
+            elif order == "handle_proc_timers":
+                now = time.time()
+                for proc in self.localProcs:
+                    lastHeartbeat = proc[1]
+                    if now - lastHeartbeat > 2:
+                        proc[0].terminate()
+                        self.localProcs.remove(proc)
+                        print(f"[timeout]: {proc[0].pid}")
 
     #spawn the process locally and return its details
     def __spawn_local_process(self, path_to_file, args, functionName):

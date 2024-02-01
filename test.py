@@ -138,6 +138,19 @@ def test7():
         surf.Process(target=hello)
     while True:
         pass
+################################################################
+def test8():
+    def hello():
+        queueConnect()
+        while True:
+            pass
+    surf = Surface.Surface_master()
+    surf.registerMaster('192.168.0.23')
+    surf.registerClient('192.168.0.40')   
+    for i in range(3):
+        surf.Process(target=hello)
+    while True:
+        pass
 ################################################################  
 # test3()
-test7()
+test8()
