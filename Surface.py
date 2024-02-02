@@ -20,7 +20,7 @@ class Surface_master:
         ##set up for agents
         self.agentPort = 30303
         self.agents = []
-        ###misc stuff###################
+        ###heart stuff###################
         self.netClients = {}
         self.netProcs = []
         self.process2heart = self.man.Queue()
@@ -135,12 +135,12 @@ class Surface_master:
     def registerMaster(self,masterIP):
         self.masterIP = masterIP
 
-    def registerClient(self, IP_ADDR, PORT=6969):
+    def registerClient(self, IP_ADDR):
         if IP_ADDR in self.netClients:
             return True
         try:
             neo = Neo.Neo()
-            neo.connect_client(PORT=PORT,IP = IP_ADDR)
+            neo.connect_client(PORT=6969,IP = IP_ADDR)
             neo.send_data('registration')
             num_cores = neo.receive_data()
             self.netClients[IP_ADDR] = [num_cores, 0]#num cores, num procs
@@ -170,21 +170,19 @@ class Surface_master:
                 neo.send_data("heartbeat")
                 neo.send_data(IP2PIDmap[IP])
                 neo.close_conn()
-            time.sleep(0.5)
+            time.sleep(0.250)
 
 ################################################################  
     
 class Surface_slave:
     def __init__(self):
         self.procsRcvd = 0
-        self.listenPort = -1
         self.localProcs = []
     
-    def startListener(self, PORT = 6969):
+    def startListener(self):
         neo = Neo.Neo()
-        neo.start_server(PORT=PORT)
+        neo.start_server(PORT=6969)
         print("Surface slave online")
-        self.listenPort = PORT
         while True:
             #handle heartbeat timers if no orders
             if neo.get_new_conn(timeout = True) == "Timeout":
@@ -192,7 +190,7 @@ class Surface_slave:
             else:    
                 order = neo.receive_data()   
 
-            #return number of cores to registering entity
+            #return number of cores to master
             if order == 'registration':
                 cores = os.cpu_count()
                 neo.send_data(cores)
@@ -231,7 +229,7 @@ class Surface_slave:
                 now = time.time()
                 for proc in self.localProcs:
                     lastHeartbeat = proc[1]
-                    if now - lastHeartbeat > 2:
+                    if now - lastHeartbeat > 1.5:
                         proc[0].terminate()
                         self.localProcs.remove(proc)
                         print(f"[timeout]: {proc[0].pid}")
@@ -252,6 +250,8 @@ class Surface_slave:
 def generateSlaveQCode(IP, PORT):
     text = f"""class queueConnect:
     def __init__(self):
+        import time
+        time.sleep(0.2)
         self.IP = "{IP}"
         self.port = {PORT}
         self.neo = Neo.Neo()

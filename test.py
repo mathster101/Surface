@@ -119,7 +119,9 @@ def test6():
     surf = Surface.Surface_master()
     surf.registerMaster('192.168.0.23')
     surf.registerClient('192.168.0.40')   
-    surf.Process(target=badFibonacci, args = (10)) 
+    surf.Process(target=badFibonacci, args = (10))
+    while True:
+        pass
 ################################################################    
 def test7():
     def hello():
@@ -141,16 +143,71 @@ def test7():
 ################################################################
 def test8():
     def hello():
+        import time 
         queueConnect()
         while True:
             pass
     surf = Surface.Surface_master()
     surf.registerMaster('192.168.0.23')
     surf.registerClient('192.168.0.40')   
-    for i in range(3):
+    for i in range(10):
         surf.Process(target=hello)
     while True:
         pass
 ################################################################  
+def test9():
+    dummyArray = (400,40)
+    def hello1(dummyArray):
+        from time import sleep
+        import numpy as np
+        from random import randint
+        queue = queueConnect()
+        counter = 0
+        array = np.random.random(dummyArray)
+        while True:
+            for i in range(12):
+                queue.queuePut(array, 1234)
+            print("cowly")
+            sleep(randint(1,16))
+            for i in range(12):
+                data = queue.queueGet(1234)
+    def hello2(dummyArray):
+        from time import sleep
+        import numpy as np
+        from random import randint
+        queue = queueConnect()
+        counter = 0
+        array = np.random.random(dummyArray)
+        while True:
+            for i in range(10):
+                queue.queuePut(array, 1234)
+            sleep(randint(1,16))
+            for i in range(10):
+                data = queue.queueGet(1234)
+    def hello3(dummyArray):
+        from time import sleep
+        import numpy as np
+        queue = queueConnect()
+        counter = 0
+        array = np.random.random(dummyArray)
+        while True:
+            for i in range(10):
+                queue.queuePut(array, 1234)
+            for i in range(10):
+                data = queue.queueGet(1234)             
+    surf = Surface.Surface_master()
+    surf.registerClient('100.117.161.73')
+    surf.registerClient('100.111.219.20')
+    surf.registerClient('100.78.211.63')
+    surf.registerMaster('100.87.169.65')
+    nums = 5
+    for i in range(nums):
+        surf.Process(target=hello1, args = (dummyArray,))
+    for i in range(nums):
+        surf.Process(target=hello2, args = (dummyArray,))
+    for i in range(nums):
+        surf.Process(target=hello3, args = (dummyArray,))       
+    while True:
+        pass
 # test3()
-test8()
+test9()
