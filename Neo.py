@@ -1,5 +1,5 @@
 import socket
-import pickle
+import dill
 import time
 import base64
 import zlib
@@ -75,11 +75,11 @@ class Neo:
         true_received = zlib.decompress(true_received)
         true_received = base64.b64decode(true_received)
         self.__remnant = received[terminate_at+len("msg-end"):]
-        true_received = pickle.loads(true_received)
+        true_received = dill.loads(true_received)
         return true_received
 
     def send_data(self,object_to_send):
-        data = pickle.dumps(object_to_send)
+        data = dill.dumps(object_to_send)
         data = base64.b64encode(data)
         data = zlib.compress(data)
         data += bytes("msg-end",encoding = 'utf-8')

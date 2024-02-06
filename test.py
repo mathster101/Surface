@@ -209,5 +209,27 @@ def test9():
         surf.Process(target=hello3, args = (dummyArray,))       
     while True:
         pass
+#########################################################
+def test8():
+    class foo:
+        def __init__(self):
+            self.a=0
+    def hello():
+        import time
+        class foo:
+            def __init__(self):
+                self.a = 99
+            def __getstate__(self):
+                print("I'm being dill-ed")
+                return self.__dict__
+        queue=queueConnect()
+        while True:
+            queue.queuePut(foo(),1234)
+    surf = Surface.Surface_master()
+    surf.registerMaster('192.168.0.23')
+    surf.registerClient('192.168.0.40')   
+    surf.Process(target=hello)
+    while True:
+        pass
 # test3()
-test9()
+test8()
